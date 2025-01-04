@@ -167,13 +167,11 @@ func set_action_list(player, current_max_bet) -> Array:
 		else:
 			action_list.append("call")
 		if current_max_bet < player.player_script.current_bet + player.player_script.chips:
-			if bet_record.size() <= 4:
-				action_list.append("raise")
+			action_list.append("raise")
 	else:
 		action_list.append("check")
 		if current_max_bet < player.player_script.current_bet + player.player_script.chips:
-			if bet_record.size() <= 4:
-				action_list.append("bet")
+			action_list.append("bet")
 
 	return action_list
 
@@ -187,11 +185,7 @@ func selected_action(action, player, current_max_bet, bb_value, seat_name):
 	elif action == "call":
 		var call_amount = current_max_bet - player.player_script.current_bet
 		player.player_script.bet(seat_name, call_amount)
-		if 0 == player.player_script.chips:
-			player.player_script.is_all_in = true
-			player.player_script.last_action.append("All-In")
-		else:
-			player.player_script.last_action.append("Call")
+		player.player_script.last_action.append("Call")
 	elif action == "bet":
 		var min_bet = bb_value * 2 - player.player_script.current_bet
 		var max_bet = player.player_script.chips
@@ -216,6 +210,13 @@ func selected_action(action, player, current_max_bet, bb_value, seat_name):
 			player.player_script.last_action.append("Raise")
 		player.player_script.bet(seat_name, raise_amount)
 		bet_record.append(player.player_script.current_bet)
+	elif action == "all-in":
+		var all_in_amount = player.player_script.chips
+		player.player_script.bet(seat_name, all_in_amount)
+		player.player_script.last_action.append("All-In")
+		player.player_script.is_all_in = true
+		if all_in_amount > current_max_bet:
+			current_max_bet = all_in_amount
 
 # ベットラウンドのアクションを処理
 func bet_round(seat_assignments: Dictionary, bb_value: int):
@@ -249,7 +250,19 @@ func bet_round(seat_assignments: Dictionary, bb_value: int):
 				return active_players
 
 			# フォールドまたはオールインしているプレイヤーはスキップ
-			if player.player_script.is_folded or player.player_script.is_all_in:
+			if player.player_script.is_folded:
+				continue
+
+			# 全てのアクティブプレイヤーがオールインしているか確認
+			var all_players_all_in = true
+			for p in active_players:
+				if not p.player_script.is_folded:
+					if not p.player_script.is_all_in:
+						all_players_all_in = false
+			if all_players_all_in:
+				return active_players
+
+			if player.player_script.is_all_in:
 				continue
 
 			# 現在の最大掛け金を取得
@@ -290,9 +303,9 @@ func bet_round(seat_assignments: Dictionary, bb_value: int):
 
 			# レイズやベットの場合、他プレイヤーのアクションフラグをリセット
 			if action in ["bet", "raise", "all-in"]:
-				for p in active_players:
-					if p != player:
-						p.player_script.has_acted = false
+				for other_player in active_players:
+					if other_player != player:
+						other_player.player_script.has_acted = false
 
 			# アクティブなプレイヤーのベット金額を確認
 			var active_players_bet = []
@@ -307,6 +320,15 @@ func bet_round(seat_assignments: Dictionary, bb_value: int):
 					break
 
 			if active_players_bet.size() >= 1 and active_players_acted:
+				bet_record = [0]
+				return active_players
+
+			var all_in_players = []
+			for p in active_players:
+				if player.player_script.is_all_in:
+					all_in_players.append(player)
+
+			if all_in_players.size() == active_players.size() and active_players_acted:
 				bet_record = [0]
 				return active_players
 

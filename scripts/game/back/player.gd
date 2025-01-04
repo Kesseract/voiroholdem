@@ -13,6 +13,7 @@ var is_folded: bool = false
 var is_all_in: bool = false
 var hand_category
 var hand_rank
+var rebuy_count
 
 # アクションとベット額を保持するプロパティ
 var selected_action: String  # プレイヤーが選択したアクション
@@ -106,6 +107,7 @@ func _cpu_select_action(available_actions: Array) -> String:
 func _player_select_action(available_actions: Array) -> String:
 	# マッピングテーブル
 	var action_mapping = {
+		"fold": ["fold"],
 		"check/call": ["check", "call"],
 		"bet/raise": ["bet", "raise"]
 	}
@@ -124,7 +126,7 @@ func _player_select_action(available_actions: Array) -> String:
 				return action  # 存在する方を返す
 
 	emit_signal("action_completed")
-	return "call"  # その他の場合はそのまま返す
+	return "all-in"  # その他の場合はそのまま返す
 
 # ベットまたはレイズの額を選択する。
 func select_bet_amount(min_amount, max_amount):

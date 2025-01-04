@@ -24,7 +24,7 @@ func add_contribution(player: String, amount: int) -> void:
 	"""
 	total += amount
 	contributions[player] = contributions.get(player, 0) + amount
-	max_contribution = max(max_contribution, contributions[player])
+	max_contribution = max(max_contribution, amount)
 
 # 指定されたプレイヤーの寄与額を返す
 func get_contribution(player: String) -> int:
