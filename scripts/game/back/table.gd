@@ -5,14 +5,11 @@ var bb
 var buy_in
 var dealer_name
 var selected_cpus
-var dealer
 var game_process
 
-var seat_assignments = {
-		"Seat1": null, "Seat2": null, "Seat3": null,
-		"Seat4": null, "Seat5": null, "Seat6": null,
-		"Seat7": null, "Seat8": null, "Seat9": null, "Seat10": null
-	}
+var player
+var cpu_players = []
+var dealer
 
 # 現在の状態を文字列として取得する
 func to_str() -> String:
@@ -32,15 +29,9 @@ func _init(_bet_size, _buy_in, _dealer_name, _selected_cpus):
 	dealer_name = _dealer_name
 	selected_cpus = _selected_cpus
 
-	# 席番号を取得し、ランダムにシャッフル
-	var seat_keys = seat_assignments.keys()
-	seat_keys.shuffle()
-
 	# 初期化処理
 	# 操作プレイヤーを作る
-	var player = ParticipantBackend.new("test", buy_in, false, "player")
-	var seat = seat_keys.pop_front()
-	seat_assignments[seat] = player
+	player = ParticipantBackend.new("test", buy_in, false, "player")
 
 	# CPUを作る
 	var dealer_flg = false
@@ -49,16 +40,11 @@ func _init(_bet_size, _buy_in, _dealer_name, _selected_cpus):
 		if cpu_name == dealer_name:
 			role = "playing_dealer"
 		var cpu_player = ParticipantBackend.new(cpu_name, buy_in, true, role)
+		cpu_players.append(cpu_player)
 
 		if role == "playing_dealer":
 			dealer = cpu_player
 			dealer_flg = true
-			seat_assignments["Dealer"] = cpu_player
-		else:
-			seat_assignments[seat_keys.pop_front()] = cpu_player
 
 	if !dealer_flg:
 		dealer = ParticipantBackend.new(dealer_name, buy_in, true, "dealer")
-		seat_assignments["Dealer"] = dealer
-
-	game_process = GameProcessBackend.new(dealer.dealer_script, seat_assignments, sb, bb)

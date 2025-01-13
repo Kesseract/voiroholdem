@@ -1,0 +1,23 @@
+[gd_scene load_steps=5 format=3 uid="uid://bwwpbokqluji3"]
+
+[ext_resource type="Texture2D" uid="uid://cqhqkhswyyhiv" path="res://assets/textures/Game/seat_normal.png" id="1_ppxvb"]
+[ext_resource type="Texture2D" uid="uid://cic3kj1lm6504" path="res://assets/textures/Game/seat_pressed.png" id="2_cvurq"]
+[ext_resource type="Texture2D" uid="uid://drquolla68jdy" path="res://assets/textures/Game/seat_hover.png" id="3_onwfg"]
+[ext_resource type="Script" path="res://scripts/game/front/seat.gd" id="4_xbku4"]
+
+[node name="Seat" type="TextureButton"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -30.0
+offset_top = -30.0
+offset_right = 30.0
+offset_bottom = 30.0
+grow_horizontal = 2
+grow_vertical = 2
+texture_normal = ExtResource("1_ppxvb")
+texture_pressed = ExtResource("2_cvurq")
+texture_hover = ExtResource("3_onwfg")
+script = ExtResource("4_xbku4")

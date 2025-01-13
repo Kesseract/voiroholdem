@@ -1,0 +1,32 @@
+[gd_scene load_steps=4 format=3 uid="uid://cxqj33c6mstsi"]
+
+[ext_resource type="Texture2D" uid="uid://b7xc7umfy2mb6" path="res://assets/textures/Game/chip.png" id="1_2r7em"]
+[ext_resource type="Script" path="res://scripts/game/front/chip.gd" id="1_hfi74"]
+[ext_resource type="Texture2D" uid="uid://bcf4n5mxsh8ny" path="res://assets/textures/Game/bet.png" id="2_6fp7f"]
+
+[node name="Chip" type="Node2D"]
+script = ExtResource("1_hfi74")
+
+[node name="Value" type="Label" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -51.5
+offset_top = -45.0
+offset_right = 51.5
+offset_bottom = -17.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "000000000"
+horizontal_alignment = 1
+
+[node name="Chip" type="Sprite2D" parent="."]
+texture = ExtResource("1_2r7em")
+
+[node name="Bet" type="Sprite2D" parent="."]
+texture = ExtResource("2_6fp7f")

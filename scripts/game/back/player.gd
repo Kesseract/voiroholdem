@@ -19,16 +19,6 @@ var rebuy_count
 var selected_action: String  # プレイヤーが選択したアクション
 var selected_bet_amount: int = 0  # プレイヤーが選択したベット額
 
-# シグナル
-signal action_selected(action: String)
-signal bet_amount_selected(amount: int)
-signal action_completed
-signal dealer_changed(seat_name: String, value: bool)  # ディーラー変更時のシグナル
-signal chips_changed(chips: int)
-signal front_chips_changed(chips: int)
-signal bet_changed(seat_name: String, bet_value: int)
-signal hand_clear(seat_name: String)
-
 # 初期化
 func _init(_name: String, _chips: int, _is_cpu: bool = false):
 	name = _name
@@ -59,27 +49,17 @@ func to_str() -> String:
 	result += "=======================\n"
 	return result
 
-func front_chips():
-	emit_signal("chips_changed", chips)
-
-func front_hands_clear(seat_name: String):
-	emit_signal("hand_clear", seat_name)
-
 # ベットする
-func bet(seat_name: String, amount: int) -> int:
+func bet(amount: int) -> int:
 	var actual_bet = min(chips, amount)
 	chips -= actual_bet
 	current_bet += actual_bet
-	# シグナルを発火して更新を通知
-	front_chips()
-	emit_signal("bet_changed", seat_name, actual_bet)
 	return actual_bet
 
 # フォールドする
-func fold(seat_name):
+func fold():
 	hand.clear()
 	is_folded = true
-	front_hands_clear(seat_name)
 
 # 利用可能なアクションの中からアクションを選択する。
 func select_action(available_actions):
@@ -87,7 +67,7 @@ func select_action(available_actions):
 	if is_cpu:
 		action = _cpu_select_action(available_actions)
 	else:
-		action = await _player_select_action(available_actions)
+		action = _player_select_action(available_actions)
 	return action
 
 # アクションを設定
@@ -98,7 +78,6 @@ func set_selected_action(action: String):
 # ベット額をセットする
 func set_selected_bet_amount(amount: int):
 	selected_bet_amount = amount
-	emit_signal("bet_amount_selected", amount)
 
 # CPUとしてアクションを選択
 func _cpu_select_action(available_actions: Array) -> String:
@@ -112,20 +91,12 @@ func _player_select_action(available_actions: Array) -> String:
 		"bet/raise": ["bet", "raise"]
 	}
 
-	# 空文字の場合、待機する
-	while selected_action == "":
-		await Engine.get_main_loop().process_frame  # フレームごとに処理を待つ
-
 	# selected_action をマッピングで確認
 	if selected_action in action_mapping:
 		for action in action_mapping[selected_action]:
-			print("action:")
-			print(action)
 			if action in available_actions:
-				emit_signal("action_completed")  # アクション完了シグナルを発火
 				return action  # 存在する方を返す
 
-	emit_signal("action_completed")
 	return "all-in"  # その他の場合はそのまま返す
 
 # ベットまたはレイズの額を選択する。
@@ -144,6 +115,5 @@ func _player_select_bet_amount(min_amount: int, max_amount: int) -> int:
 	return int(selected_bet_amount)  # スケーリング結果を整数に変換して返す
 
 # ディーラーフラグをセットする
-func set_dealer(seat_name: String, status: bool):
+func set_dealer(status: bool):
 	is_dealer = status
-	emit_signal("dealer_changed", seat_name, status)  # ディーラーが変更されたことを通知

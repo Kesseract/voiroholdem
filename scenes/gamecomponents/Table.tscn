@@ -1,0 +1,67 @@
+[gd_scene load_steps=3 format=3 uid="uid://ypm2mdfqwyw6"]
+
+[ext_resource type="PackedScene" uid="uid://bwwpbokqluji3" path="res://scenes/gamecomponents/Seat.tscn" id="1_d8xap"]
+[ext_resource type="Script" path="res://scripts/game/front/table.gd" id="1_ofspt"]
+
+[node name="Table" type="Node2D"]
+script = ExtResource("1_ofspt")
+
+[node name="Seat1" type="Node2D" parent="."]
+position = Vector2(80, 72)
+
+[node name="SeatButton" parent="Seat1" instance=ExtResource("1_d8xap")]
+metadata/_edit_use_anchors_ = true
+
+[node name="Seat2" type="Node2D" parent="."]
+position = Vector2(184, 72)
+
+[node name="SeatButton" parent="Seat2" instance=ExtResource("1_d8xap")]
+metadata/_edit_use_anchors_ = true
+
+[node name="Seat3" type="Node2D" parent="."]
+position = Vector2(280, 72)
+
+[node name="SeatButton" parent="Seat3" instance=ExtResource("1_d8xap")]
+metadata/_edit_use_anchors_ = true
+
+[node name="Seat4" type="Node2D" parent="."]
+position = Vector2(376, 72)
+
+[node name="SeatButton" parent="Seat4" instance=ExtResource("1_d8xap")]
+metadata/_edit_use_anchors_ = true
+
+[node name="Seat5" type="Node2D" parent="."]
+position = Vector2(472, 72)
+
+[node name="SeatButton" parent="Seat5" instance=ExtResource("1_d8xap")]
+metadata/_edit_use_anchors_ = true
+
+[node name="Seat6" type="Node2D" parent="."]
+position = Vector2(80, 152)
+
+[node name="SeatButton" parent="Seat6" instance=ExtResource("1_d8xap")]
+metadata/_edit_use_anchors_ = true
+
+[node name="Seat7" type="Node2D" parent="."]
+position = Vector2(184, 152)
+
+[node name="SeatButton" parent="Seat7" instance=ExtResource("1_d8xap")]
+metadata/_edit_use_anchors_ = true
+
+[node name="Seat8" type="Node2D" parent="."]
+position = Vector2(280, 152)
+
+[node name="SeatButton" parent="Seat8" instance=ExtResource("1_d8xap")]
+metadata/_edit_use_anchors_ = true
+
+[node name="Seat9" type="Node2D" parent="."]
+position = Vector2(376, 152)
+
+[node name="SeatButton" parent="Seat9" instance=ExtResource("1_d8xap")]
+metadata/_edit_use_anchors_ = true
+
+[node name="Seat10" type="Node2D" parent="."]
+position = Vector2(472, 152)
+
+[node name="SeatButton" parent="Seat10" instance=ExtResource("1_d8xap")]
+metadata/_edit_use_anchors_ = true

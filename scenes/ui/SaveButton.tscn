@@ -1,0 +1,23 @@
+[gd_scene load_steps=5 format=3 uid="uid://ci651ib2roicr"]
+
+[ext_resource type="Texture2D" uid="uid://dji436wnxs0vy" path="res://assets/textures/Common/save_normal.png" id="1_83s1h"]
+[ext_resource type="Texture2D" uid="uid://dm28rikxc6nny" path="res://assets/textures/Common/save_pressed.png" id="2_48rst"]
+[ext_resource type="Texture2D" uid="uid://d37mmqi648v2l" path="res://assets/textures/Common/save_hover.png" id="3_bk12g"]
+[ext_resource type="Script" path="res://scripts/ui/savebutton.gd" id="4_i8h3i"]
+
+[node name="SaveButton" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TextureButton" type="TextureButton" parent="."]
+layout_mode = 1
+offset_right = 80.0
+offset_bottom = 80.0
+texture_normal = ExtResource("1_83s1h")
+texture_pressed = ExtResource("2_48rst")
+texture_hover = ExtResource("3_bk12g")
+script = ExtResource("4_i8h3i")

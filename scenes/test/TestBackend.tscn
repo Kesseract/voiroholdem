@@ -1,0 +1,753 @@
+[gd_scene load_steps=12 format=3 uid="uid://blou16lc1mqle"]
+
+[ext_resource type="Script" path="res://scripts/testbackend.gd" id="1_6yih6"]
+[ext_resource type="Texture2D" uid="uid://clnqgss5172v5" path="res://assets/textures/Game/fold_normal.png" id="2_y1j3h"]
+[ext_resource type="Texture2D" uid="uid://ck1bb56ug4il6" path="res://assets/textures/Game/fold_pressed.png" id="3_44bwr"]
+[ext_resource type="Texture2D" uid="uid://tqjig6ltmhjg" path="res://assets/textures/Game/fold_hover.png" id="4_g2qqf"]
+[ext_resource type="Texture2D" uid="uid://vg7c2821cdno" path="res://assets/textures/Game/checkcall_normal.png" id="5_35m2y"]
+[ext_resource type="Texture2D" uid="uid://7wtgou5nocah" path="res://assets/textures/Game/checkcall_pressed.png" id="6_neshe"]
+[ext_resource type="Texture2D" uid="uid://b5j26nanotnyl" path="res://assets/textures/Game/checkcall_hover.png" id="7_u225h"]
+[ext_resource type="Texture2D" uid="uid://bg7l0xdtkiva1" path="res://assets/textures/Game/betraise_normal.png" id="8_ptga5"]
+[ext_resource type="Texture2D" uid="uid://dus55orpg4pct" path="res://assets/textures/Game/betraise_pressed.png" id="9_nherv"]
+[ext_resource type="Texture2D" uid="uid://cqmfbjvcrd00d" path="res://assets/textures/Game/betraise_hover.png" id="10_s6p0n"]
+[ext_resource type="Texture2D" uid="uid://dlh3m4q41hmus" path="res://assets/textures/Game/dealer_button.png" id="11_txy8q"]
+
+[node name="TestBackend" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_6yih6")
+
+[node name="FoldButton" type="TextureButton" parent="."]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 679.0
+offset_right = 427.0
+offset_bottom = 719.0
+toggle_mode = true
+action_mode = 0
+texture_normal = ExtResource("2_y1j3h")
+texture_pressed = ExtResource("3_44bwr")
+texture_hover = ExtResource("4_g2qqf")
+
+[node name="CheckCallButton" type="TextureButton" parent="."]
+layout_mode = 0
+offset_left = 427.0
+offset_top = 679.0
+offset_right = 853.0
+offset_bottom = 719.0
+toggle_mode = true
+action_mode = 0
+texture_normal = ExtResource("5_35m2y")
+texture_pressed = ExtResource("6_neshe")
+texture_hover = ExtResource("7_u225h")
+
+[node name="BetRaiseButton" type="TextureButton" parent="."]
+layout_mode = 0
+offset_left = 853.0
+offset_top = 679.0
+offset_right = 1279.0
+offset_bottom = 719.0
+toggle_mode = true
+action_mode = 0
+texture_normal = ExtResource("8_ptga5")
+texture_pressed = ExtResource("9_nherv")
+texture_hover = ExtResource("10_s6p0n")
+
+[node name="BetSize" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 855.0
+offset_top = 584.0
+offset_right = 1276.0
+offset_bottom = 676.0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="BetSize"]
+layout_mode = 2
+
+[node name="LineEdit" type="LineEdit" parent="BetSize/HBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+placeholder_text = "ベットサイズ"
+alignment = 3
+expand_to_text_length = true
+
+[node name="HSlider" type="HSlider" parent="BetSize"]
+layout_mode = 2
+min_value = 1.0
+value = 50.0
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="BetSize"]
+layout_mode = 2
+theme_override_constants/separation = 350
+
+[node name="MIN" type="Label" parent="BetSize/HBoxContainer2"]
+layout_mode = 2
+text = "MIN"
+
+[node name="MAX" type="Label" parent="BetSize/HBoxContainer2"]
+layout_mode = 2
+text = "MAX"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="."]
+layout_mode = 0
+offset_right = 1282.0
+offset_bottom = 571.0
+
+[node name="VScrollBar" type="VScrollBar" parent="ScrollContainer"]
+layout_mode = 2
+
+[node name="HScrollBar" type="HScrollBar" parent="ScrollContainer"]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ScrollContainer"]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Dealer" type="Label" parent="ScrollContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+text = "Dealer
+pots：
+bet_record：
+community_cards："
+
+[node name="Pot" type="Label" parent="ScrollContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="Pot2" type="Label" parent="ScrollContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="Pot3" type="Label" parent="ScrollContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="Pot4" type="Label" parent="ScrollContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="Pot5" type="Label" parent="ScrollContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="Pot6" type="Label" parent="ScrollContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="Pot7" type="Label" parent="ScrollContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="Pot8" type="Label" parent="ScrollContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="Pot9" type="Label" parent="ScrollContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="Pot10" type="Label" parent="ScrollContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="Blank3" type="Label" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Seat" type="HBoxContainer" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Seat1" type="VBoxContainer" parent="ScrollContainer/VBoxContainer/Seat"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Label" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat1"]
+layout_mode = 2
+
+[node name="Blank2" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat1"]
+layout_mode = 2
+
+[node name="Hand" type="HBoxContainer" parent="ScrollContainer/VBoxContainer/Seat/Seat1"]
+layout_mode = 2
+theme_override_constants/separation = 50
+alignment = 1
+
+[node name="Blank3" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat1/Hand"]
+layout_mode = 2
+
+[node name="Card1" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat1/Hand"]
+position = Vector2(100, 0)
+
+[node name="Blank4" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat1/Hand"]
+layout_mode = 2
+
+[node name="Card2" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat1/Hand"]
+position = Vector2(150, 0)
+
+[node name="Blank3" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat1"]
+layout_mode = 2
+
+[node name="Chip" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat1"]
+position = Vector2(0, 400)
+
+[node name="Blank4" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat1"]
+layout_mode = 2
+
+[node name="Bet" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat1"]
+position = Vector2(0, 500)
+
+[node name="Blank5" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat1"]
+layout_mode = 2
+
+[node name="DealerButton" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat1"]
+position = Vector2(100, 0)
+
+[node name="Seat2" type="VBoxContainer" parent="ScrollContainer/VBoxContainer/Seat"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Label" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat2"]
+layout_mode = 2
+
+[node name="Blank2" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat2"]
+layout_mode = 2
+
+[node name="Hand" type="HBoxContainer" parent="ScrollContainer/VBoxContainer/Seat/Seat2"]
+layout_mode = 2
+theme_override_constants/separation = 50
+alignment = 1
+
+[node name="Blank3" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat2/Hand"]
+layout_mode = 2
+
+[node name="Card1" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat2/Hand"]
+position = Vector2(100, 0)
+
+[node name="Blank4" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat2/Hand"]
+layout_mode = 2
+
+[node name="Card2" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat2/Hand"]
+position = Vector2(150, 0)
+
+[node name="Blank3" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat2"]
+layout_mode = 2
+
+[node name="Chip" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat2"]
+position = Vector2(0, 400)
+
+[node name="Blank4" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat2"]
+layout_mode = 2
+
+[node name="Bet" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat2"]
+position = Vector2(0, 500)
+
+[node name="Blank5" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat2"]
+layout_mode = 2
+
+[node name="DealerButton" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat2"]
+position = Vector2(100, 0)
+
+[node name="Seat3" type="VBoxContainer" parent="ScrollContainer/VBoxContainer/Seat"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Label" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat3"]
+layout_mode = 2
+
+[node name="Blank2" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat3"]
+layout_mode = 2
+
+[node name="Hand" type="HBoxContainer" parent="ScrollContainer/VBoxContainer/Seat/Seat3"]
+layout_mode = 2
+theme_override_constants/separation = 50
+alignment = 1
+
+[node name="Blank3" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat3/Hand"]
+layout_mode = 2
+
+[node name="Card1" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat3/Hand"]
+position = Vector2(100, 0)
+
+[node name="Blank4" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat3/Hand"]
+layout_mode = 2
+
+[node name="Card2" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat3/Hand"]
+position = Vector2(150, 0)
+
+[node name="Blank3" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat3"]
+layout_mode = 2
+
+[node name="Chip" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat3"]
+position = Vector2(0, 400)
+
+[node name="Blank4" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat3"]
+layout_mode = 2
+
+[node name="Bet" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat3"]
+position = Vector2(0, 500)
+
+[node name="Blank5" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat3"]
+layout_mode = 2
+
+[node name="DealerButton" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat3"]
+position = Vector2(100, 0)
+
+[node name="Seat4" type="VBoxContainer" parent="ScrollContainer/VBoxContainer/Seat"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Label" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat4"]
+layout_mode = 2
+
+[node name="Blank2" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat4"]
+layout_mode = 2
+
+[node name="Hand" type="HBoxContainer" parent="ScrollContainer/VBoxContainer/Seat/Seat4"]
+layout_mode = 2
+theme_override_constants/separation = 50
+alignment = 1
+
+[node name="Blank3" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat4/Hand"]
+layout_mode = 2
+
+[node name="Card1" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat4/Hand"]
+position = Vector2(100, 0)
+
+[node name="Blank4" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat4/Hand"]
+layout_mode = 2
+
+[node name="Card2" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat4/Hand"]
+position = Vector2(150, 0)
+
+[node name="Blank3" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat4"]
+layout_mode = 2
+
+[node name="Chip" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat4"]
+position = Vector2(0, 400)
+
+[node name="Blank4" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat4"]
+layout_mode = 2
+
+[node name="Bet" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat4"]
+position = Vector2(0, 500)
+
+[node name="Blank5" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat4"]
+layout_mode = 2
+
+[node name="DealerButton" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat4"]
+position = Vector2(100, 0)
+
+[node name="Seat5" type="VBoxContainer" parent="ScrollContainer/VBoxContainer/Seat"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Label" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat5"]
+layout_mode = 2
+
+[node name="Blank2" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat5"]
+layout_mode = 2
+
+[node name="Hand" type="HBoxContainer" parent="ScrollContainer/VBoxContainer/Seat/Seat5"]
+layout_mode = 2
+theme_override_constants/separation = 50
+alignment = 1
+
+[node name="Blank3" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat5/Hand"]
+layout_mode = 2
+
+[node name="Card1" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat5/Hand"]
+position = Vector2(100, 0)
+
+[node name="Blank4" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat5/Hand"]
+layout_mode = 2
+
+[node name="Card2" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat5/Hand"]
+position = Vector2(150, 0)
+
+[node name="Blank3" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat5"]
+layout_mode = 2
+
+[node name="Chip" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat5"]
+position = Vector2(0, 400)
+
+[node name="Blank4" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat5"]
+layout_mode = 2
+
+[node name="Bet" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat5"]
+position = Vector2(0, 500)
+
+[node name="Blank5" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat5"]
+layout_mode = 2
+
+[node name="DealerButton" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat5"]
+position = Vector2(100, 0)
+
+[node name="Seat6" type="VBoxContainer" parent="ScrollContainer/VBoxContainer/Seat"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Label" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat6"]
+layout_mode = 2
+
+[node name="Blank2" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat6"]
+layout_mode = 2
+
+[node name="Hand" type="HBoxContainer" parent="ScrollContainer/VBoxContainer/Seat/Seat6"]
+layout_mode = 2
+theme_override_constants/separation = 50
+alignment = 1
+
+[node name="Blank3" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat6/Hand"]
+layout_mode = 2
+
+[node name="Card1" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat6/Hand"]
+position = Vector2(100, 0)
+
+[node name="Blank4" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat6/Hand"]
+layout_mode = 2
+
+[node name="Card2" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat6/Hand"]
+position = Vector2(150, 0)
+
+[node name="Blank3" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat6"]
+layout_mode = 2
+
+[node name="Chip" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat6"]
+position = Vector2(0, 400)
+
+[node name="Blank4" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat6"]
+layout_mode = 2
+
+[node name="Bet" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat6"]
+position = Vector2(0, 500)
+
+[node name="Blank5" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat6"]
+layout_mode = 2
+
+[node name="DealerButton" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat6"]
+position = Vector2(100, 0)
+
+[node name="Seat7" type="VBoxContainer" parent="ScrollContainer/VBoxContainer/Seat"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Label" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat7"]
+layout_mode = 2
+
+[node name="Blank2" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat7"]
+layout_mode = 2
+
+[node name="Hand" type="HBoxContainer" parent="ScrollContainer/VBoxContainer/Seat/Seat7"]
+layout_mode = 2
+theme_override_constants/separation = 50
+alignment = 1
+
+[node name="Blank3" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat7/Hand"]
+layout_mode = 2
+
+[node name="Card1" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat7/Hand"]
+position = Vector2(100, 0)
+
+[node name="Blank4" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat7/Hand"]
+layout_mode = 2
+
+[node name="Card2" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat7/Hand"]
+position = Vector2(150, 0)
+
+[node name="Blank3" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat7"]
+layout_mode = 2
+
+[node name="Chip" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat7"]
+position = Vector2(0, 400)
+
+[node name="Blank4" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat7"]
+layout_mode = 2
+
+[node name="Bet" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat7"]
+position = Vector2(0, 500)
+
+[node name="Blank5" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat7"]
+layout_mode = 2
+
+[node name="DealerButton" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat7"]
+position = Vector2(100, 0)
+
+[node name="Seat8" type="VBoxContainer" parent="ScrollContainer/VBoxContainer/Seat"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Label" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat8"]
+layout_mode = 2
+
+[node name="Blank2" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat8"]
+layout_mode = 2
+
+[node name="Hand" type="HBoxContainer" parent="ScrollContainer/VBoxContainer/Seat/Seat8"]
+layout_mode = 2
+theme_override_constants/separation = 50
+alignment = 1
+
+[node name="Blank3" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat8/Hand"]
+layout_mode = 2
+
+[node name="Card1" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat8/Hand"]
+position = Vector2(100, 0)
+
+[node name="Blank4" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat8/Hand"]
+layout_mode = 2
+
+[node name="Card2" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat8/Hand"]
+position = Vector2(150, 0)
+
+[node name="Blank3" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat8"]
+layout_mode = 2
+
+[node name="Chip" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat8"]
+position = Vector2(0, 400)
+
+[node name="Blank4" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat8"]
+layout_mode = 2
+
+[node name="Bet" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat8"]
+position = Vector2(0, 500)
+
+[node name="Blank5" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat8"]
+layout_mode = 2
+
+[node name="DealerButton" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat8"]
+position = Vector2(100, 0)
+
+[node name="Seat9" type="VBoxContainer" parent="ScrollContainer/VBoxContainer/Seat"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Label" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat9"]
+layout_mode = 2
+
+[node name="Blank2" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat9"]
+layout_mode = 2
+
+[node name="Hand" type="HBoxContainer" parent="ScrollContainer/VBoxContainer/Seat/Seat9"]
+layout_mode = 2
+theme_override_constants/separation = 50
+alignment = 1
+
+[node name="Blank3" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat9/Hand"]
+layout_mode = 2
+
+[node name="Card1" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat9/Hand"]
+position = Vector2(100, 0)
+
+[node name="Blank4" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat9/Hand"]
+layout_mode = 2
+
+[node name="Card2" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat9/Hand"]
+position = Vector2(150, 0)
+
+[node name="Blank3" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat9"]
+layout_mode = 2
+
+[node name="Chip" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat9"]
+position = Vector2(0, 400)
+
+[node name="Blank4" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat9"]
+layout_mode = 2
+
+[node name="Bet" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat9"]
+position = Vector2(0, 500)
+
+[node name="Blank5" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat9"]
+layout_mode = 2
+
+[node name="DealerButton" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat9"]
+position = Vector2(100, 0)
+
+[node name="Seat10" type="VBoxContainer" parent="ScrollContainer/VBoxContainer/Seat"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Label" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat10"]
+layout_mode = 2
+
+[node name="Blank2" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat10"]
+layout_mode = 2
+
+[node name="Hand" type="HBoxContainer" parent="ScrollContainer/VBoxContainer/Seat/Seat10"]
+layout_mode = 2
+theme_override_constants/separation = 50
+alignment = 1
+
+[node name="Blank3" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat10/Hand"]
+layout_mode = 2
+
+[node name="Card1" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat10/Hand"]
+position = Vector2(100, 0)
+
+[node name="Blank4" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat10/Hand"]
+layout_mode = 2
+
+[node name="Card2" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat10/Hand"]
+position = Vector2(150, 0)
+
+[node name="Blank3" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat10"]
+layout_mode = 2
+
+[node name="Chip" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat10"]
+position = Vector2(0, 400)
+
+[node name="Blank4" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat10"]
+layout_mode = 2
+
+[node name="Bet" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat10"]
+position = Vector2(0, 500)
+
+[node name="Blank5" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Seat10"]
+layout_mode = 2
+
+[node name="DealerButton" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Seat10"]
+position = Vector2(100, 0)
+
+[node name="Dealer" type="VBoxContainer" parent="ScrollContainer/VBoxContainer/Seat"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Label" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Dealer"]
+layout_mode = 2
+
+[node name="Blank2" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Dealer"]
+layout_mode = 2
+
+[node name="Hand" type="HBoxContainer" parent="ScrollContainer/VBoxContainer/Seat/Dealer"]
+layout_mode = 2
+theme_override_constants/separation = 50
+alignment = 1
+
+[node name="Blank3" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Dealer/Hand"]
+layout_mode = 2
+
+[node name="Card1" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Dealer/Hand"]
+position = Vector2(100, 0)
+
+[node name="Blank4" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Dealer/Hand"]
+layout_mode = 2
+
+[node name="Card2" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Dealer/Hand"]
+position = Vector2(150, 0)
+
+[node name="Blank3" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Dealer"]
+layout_mode = 2
+
+[node name="Chip" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Dealer"]
+position = Vector2(0, 400)
+
+[node name="Blank4" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Dealer"]
+layout_mode = 2
+
+[node name="Bet" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Dealer"]
+position = Vector2(0, 500)
+
+[node name="Blank5" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Dealer"]
+layout_mode = 2
+
+[node name="DealerButton" type="Node2D" parent="ScrollContainer/VBoxContainer/Seat/Dealer"]
+position = Vector2(100, 0)
+
+[node name="DealerButtonTex" type="TextureRect" parent="ScrollContainer/VBoxContainer/Seat/Dealer/DealerButton"]
+offset_right = 40.0
+offset_bottom = 40.0
+texture = ExtResource("11_txy8q")
+
+[node name="Blank5" type="Label" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Blank11" type="Label" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Blank12" type="Label" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Blank13" type="Label" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Blank14" type="Label" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Blank15" type="Label" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Pot" type="HBoxContainer" parent="ScrollContainer/VBoxContainer"]
+visible = false
+layout_mode = 2
+
+[node name="Blank7" type="Label" parent="ScrollContainer/VBoxContainer/Pot"]
+layout_mode = 2
+
+[node name="Pot" type="Node2D" parent="ScrollContainer/VBoxContainer/Pot"]
+position = Vector2(100, 0)
+
+[node name="Blank7" type="Label" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Blank16" type="Label" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Blank17" type="Label" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Blank18" type="Label" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Blank19" type="Label" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Burn" type="HBoxContainer" parent="ScrollContainer/VBoxContainer"]
+visible = false
+layout_mode = 2
+
+[node name="SetDealer" type="Node2D" parent="ScrollContainer/VBoxContainer/Burn"]
+position = Vector2(100, 0)
+
+[node name="DealCard" type="Node2D" parent="ScrollContainer/VBoxContainer/Burn"]
+position = Vector2(200, 0)
+
+[node name="Flop" type="Node2D" parent="ScrollContainer/VBoxContainer/Burn"]
+position = Vector2(300, 0)
+
+[node name="Turn" type="Node2D" parent="ScrollContainer/VBoxContainer/Burn"]
+position = Vector2(400, 0)
+
+[node name="River" type="Node2D" parent="ScrollContainer/VBoxContainer/Burn"]
+position = Vector2(500, 0)
+
+[node name="Blank6" type="Label" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Blank8" type="Label" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Blank9" type="Label" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Blank10" type="Label" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Community" type="HBoxContainer" parent="ScrollContainer/VBoxContainer"]
+visible = false
+layout_mode = 2
+
+[node name="Flop1" type="Node2D" parent="ScrollContainer/VBoxContainer/Community"]
+position = Vector2(100, 0)
+
+[node name="Flop2" type="Node2D" parent="ScrollContainer/VBoxContainer/Community"]
+position = Vector2(200, 0)
+
+[node name="Flop3" type="Node2D" parent="ScrollContainer/VBoxContainer/Community"]
+position = Vector2(300, 0)
+
+[node name="Turn" type="Node2D" parent="ScrollContainer/VBoxContainer/Community"]
+position = Vector2(400, 0)
+
+[node name="River" type="Node2D" parent="ScrollContainer/VBoxContainer/Community"]
+position = Vector2(500, 0)

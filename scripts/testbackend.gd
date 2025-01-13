@@ -26,9 +26,6 @@ extends Control
 @onready var bet_size_input = $BetSize/HBoxContainer/LineEdit
 
 #TODO 次のタスク
-# リファクタリング
-# 細かいステップごとに止める機能の実装
-# アニメーションの実装
 
 # 必要な値
 var bet_size = { "name": "table_1 bb:2 sb:1", "bb": 2, "sb": 1 }
@@ -57,12 +54,6 @@ func _ready():
 
 	# シグナルの初期設定
 	_initialize_signals()
-
-	# タイマー作成
-	_initialize_timers()
-
-	# ゲームを開始
-	await table_backend.game_process.advance_phase()
 
 func _initialize_node():
 	# 座席の親ノードを取得
@@ -176,13 +167,6 @@ func _initialize_signals():
 	dealer_backend.connect("min_size", Callable(self, "_update_min_size_range"))
 	dealer_backend.connect("max_size", Callable(self, "_update_max_size_range"))
 	dealer_backend.connect("step_completed", Callable(self, "_on_step_completed"))
-
-func _initialize_timers():
-	phase_timer = Timer.new()
-	phase_timer.name = "PhaseTimer"
-	phase_timer.one_shot = true
-	add_child(phase_timer)
-	phase_timer.connect("timeout", Callable(self, "_on_phase_timer_timeout"))
 
 # Foldボタンのトグル状態変更時の処理
 func _on_fold_button_toggled(toggled_on: bool):
@@ -381,6 +365,7 @@ func _on_phase_timer_timeout():
 	await table_backend.game_process.advance_phase()
 
 func _process(delta):
+
 	# 各クラスの状態を更新
 	update_debug_label()
 

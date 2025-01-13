@@ -1,0 +1,23 @@
+[gd_scene load_steps=5 format=3 uid="uid://vpacb0pr6l3x"]
+
+[ext_resource type="Texture2D" uid="uid://bxgfbk6ob1y1x" path="res://assets/textures/Common/setting_normal.png" id="1_lr8p5"]
+[ext_resource type="Texture2D" uid="uid://4vw6aeipa460" path="res://assets/textures/Common/setting_pressed.png" id="2_cmqa7"]
+[ext_resource type="Texture2D" uid="uid://dav6ix2vtafly" path="res://assets/textures/Common/setting_hover.png" id="3_ec7d8"]
+[ext_resource type="Script" path="res://scripts/ui/settingbutton.gd" id="4_gc4v7"]
+
+[node name="SettingButton" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TextureButton" type="TextureButton" parent="."]
+layout_mode = 1
+offset_right = 80.0
+offset_bottom = 80.0
+texture_normal = ExtResource("1_lr8p5")
+texture_pressed = ExtResource("2_cmqa7")
+texture_hover = ExtResource("3_ec7d8")
+script = ExtResource("4_gc4v7")

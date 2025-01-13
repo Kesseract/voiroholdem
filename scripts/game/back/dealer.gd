@@ -8,18 +8,6 @@ var community_cards: Array = []
 var hand_evaluator
 var game_process
 
-signal burn_card_signal(place: String, card: CardBackend)
-signal deal_card_signal(place: String, card: CardBackend)
-signal community_card_signal(seat: String, place: String, card: CardBackend)
-signal delete_front_bet(seat: String)
-signal set_pot(total_chips: int)
-signal delete_front_pot()
-signal delete_front_community()
-signal delete_front_burn()
-signal min_size(min_size: int)
-signal max_size(max_size: int)
-signal step_completed()
-
 # 初期化
 func _init():
 	deck = DeckBackend.new()
@@ -44,9 +32,8 @@ func to_str() -> String:
 	return result
 
 # バーンカードを行う
-func burn_card(place: String):
+func burn_card():
 	var card = deck.draw_card()
-	emit_signal("burn_card_signal", place, card)
 
 # プレイヤーにカードを配る
 func deal_card(seat_assignments, start_position := 0):
@@ -62,16 +49,11 @@ func deal_card(seat_assignments, start_position := 0):
 		if current_player:
 			var card = deck.draw_card()
 			current_player.player_script.hand.append(card)
-			emit_signal("deal_card_signal", current_seat, "Card1", card)
-			emit_signal("step_completed")
 
 func set_initial_button(seat_assignments):
 
 	# バーンカードを1枚捨てる
-	burn_card("SetDealer")
-
-	# Stepタイマーを開始して次のStep（カードを配る）に進む
-	emit_signal("step_completed")
+	burn_card()
 
 	# 各プレイヤーに1枚ずつカードを配る
 	deal_card(seat_assignments)
@@ -101,9 +83,6 @@ func set_initial_button(seat_assignments):
 		var player = seat_assignments[seat]
 		if player:
 			player.player_script.hand.clear()
-			player.player_script.front_hands_clear(seat)
-
-	emit_signal("delete_front_burn")
 
 	return dealer_player
 
@@ -139,7 +118,7 @@ func get_dealer_button_index(seat_assignments: Dictionary, count: int = 0) -> St
 
 # 各プレイヤーに2枚のホールカードを配る
 func deal_hole_cards(seat_assignments: Dictionary):
-	burn_card("DealCard")
+	burn_card()
 
 	# 座席リストを取得してソート
 	var seats = seat_assignments.keys()
@@ -154,7 +133,6 @@ func deal_hole_cards(seat_assignments: Dictionary):
 			if player != null:  # 空の座席をスキップ
 				var card = deck.draw_card()
 				player.player_script.hand.append(card)
-				emit_signal("deal_card_signal", seats[current_position], i, card)
 
 
 # アクションリストを作成
@@ -283,12 +261,10 @@ func bet_round(seat_assignments: Dictionary, bb_value: int):
 				var slider_max_size = player.player_script.chips
 				if slider_min_size > slider_max_size:
 					slider_min_size = slider_max_size
-				emit_signal("min_size", slider_min_size)
-				emit_signal("max_size", slider_max_size)
 
 			var action_list = set_action_list(player, current_max_bet)
 
-			var action = await player.player_script.select_action(action_list)
+			var action = player.player_script.select_action(action_list)
 
 			# 選択したアクションを実行
 			selected_action(action, player, current_max_bet, bb_value, current_seat)
@@ -340,8 +316,6 @@ func pot_collect(seat_assignments: Dictionary) -> int:
 	for seat in seat_assignments.keys():
 		var player = seat_assignments[seat]
 		if player != null:
-			# ここでfront_betの表示を消す
-			emit_signal("delete_front_bet", seat)
 			if not player.player_script.is_folded:
 				active_bets.append(player.player_script.current_bet)
 	active_bets.sort()
@@ -389,22 +363,18 @@ func pot_collect(seat_assignments: Dictionary) -> int:
 	for pot in pots:
 		total_chips += pot.total
 
-	# ここでfront_potに追加する
-	emit_signal("set_pot", total_chips)
 	return total_chips
 
 
 # 指定された枚数のコミュニティカードを公開する
-func reveal_community_cards(num_cards: Array, phase: String) -> Array:
+func reveal_community_cards(num_cards: Array) -> Array:
 	# デッキからカードをバーン
-	burn_card(phase)
+	burn_card()
 
 	# 指定された枚数のカードを公開
 	for place in num_cards:
 		var card = deck.draw_card()  # デッキからカードを1枚引く
 		community_cards.append(card)
-
-		emit_signal("community_card_signal", place, card)
 
 	return community_cards
 
@@ -437,9 +407,6 @@ func distribute_pots(seat_assignments: Dictionary):
 		for pot in pots:
 			total_chips += pot.total
 		winner.player_script.chips += total_chips
-		winner.player_script.front_chips()
-		# ポットを削除
-		emit_signal("delete_front_pot")
 		return
 
 	# 複数人の場合、手を評価
@@ -469,10 +436,6 @@ func distribute_pots(seat_assignments: Dictionary):
 			var chips_per_winner = pot.total / winners.size()
 			for winner in winners:
 				winner.player_script.chips += chips_per_winner
-				winner.player_script.front_chips()
-
-	# ポットを削除
-	emit_signal("delete_front_pot")
 
 # ラウンドの終了後に必要な情報をリセットする
 func reset_round(seat_assignments: Dictionary):
@@ -488,8 +451,6 @@ func reset_round(seat_assignments: Dictionary):
 			player.player_script.is_all_in = false
 			player.player_script.hand_category = null
 			player.player_script.hand_rank = null
-			player.player_script.front_hands_clear(seat)
-
 	# 2. コミュニティカードのリセット
 	community_cards = []
 
@@ -505,12 +466,8 @@ func reset_round(seat_assignments: Dictionary):
 
 	# 6. 表示項目のリセット
 	# シグナルを飛ばす
-	# バーンカードとコミュニティカードをリセット
-	emit_signal("delete_front_community")
-	emit_signal("delete_front_burn")
 
 	# n. その他の必要な情報をリセット（必要に応じて追加）
-
 
 # ディーラーボタンを次のプレイヤーに移動します
 func move_dealer_button(seat_assignments: Dictionary):

@@ -1,0 +1,65 @@
+[gd_scene load_steps=13 format=3 uid="uid://866tesf4623m"]
+
+[ext_resource type="Script" path="res://scripts/scene/game.gd" id="1_y0vj1"]
+[ext_resource type="Texture2D" uid="uid://clnqgss5172v5" path="res://assets/textures/Game/fold_normal.png" id="2_wa6v1"]
+[ext_resource type="PackedScene" uid="uid://vpacb0pr6l3x" path="res://scenes/ui/SettingButton.tscn" id="2_xtc8e"]
+[ext_resource type="Texture2D" uid="uid://ck1bb56ug4il6" path="res://assets/textures/Game/fold_pressed.png" id="3_el3cm"]
+[ext_resource type="PackedScene" uid="uid://djt73qywwoh4c" path="res://scenes/ui/LeaveButton.tscn" id="3_lbc0m"]
+[ext_resource type="Texture2D" uid="uid://tqjig6ltmhjg" path="res://assets/textures/Game/fold_hover.png" id="4_ct81h"]
+[ext_resource type="Texture2D" uid="uid://vg7c2821cdno" path="res://assets/textures/Game/checkcall_normal.png" id="5_qyocq"]
+[ext_resource type="Texture2D" uid="uid://7wtgou5nocah" path="res://assets/textures/Game/checkcall_pressed.png" id="6_up85b"]
+[ext_resource type="Texture2D" uid="uid://b5j26nanotnyl" path="res://assets/textures/Game/checkcall_hover.png" id="7_wh2gn"]
+[ext_resource type="Texture2D" uid="uid://bg7l0xdtkiva1" path="res://assets/textures/Game/betraise_normal.png" id="8_alh5m"]
+[ext_resource type="Texture2D" uid="uid://dus55orpg4pct" path="res://assets/textures/Game/betraise_pressed.png" id="9_draxw"]
+[ext_resource type="Texture2D" uid="uid://cqmfbjvcrd00d" path="res://assets/textures/Game/betraise_hover.png" id="10_dqwc2"]
+
+[node name="Game" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_y0vj1")
+
+[node name="FoldButton" type="TextureButton" parent="."]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 679.0
+offset_right = 427.0
+offset_bottom = 719.0
+texture_normal = ExtResource("2_wa6v1")
+texture_pressed = ExtResource("3_el3cm")
+texture_hover = ExtResource("4_ct81h")
+
+[node name="CheckCallButton" type="TextureButton" parent="."]
+layout_mode = 0
+offset_left = 427.0
+offset_top = 679.0
+offset_right = 853.0
+offset_bottom = 719.0
+texture_normal = ExtResource("5_qyocq")
+texture_pressed = ExtResource("6_up85b")
+texture_hover = ExtResource("7_wh2gn")
+
+[node name="BetRaiseButton" type="TextureButton" parent="."]
+layout_mode = 0
+offset_left = 853.0
+offset_top = 679.0
+offset_right = 1279.0
+offset_bottom = 719.0
+texture_normal = ExtResource("8_alh5m")
+texture_pressed = ExtResource("9_draxw")
+texture_hover = ExtResource("10_dqwc2")
+
+[node name="SettingButton" parent="." instance=ExtResource("2_xtc8e")]
+layout_mode = 1
+offset_left = 1180.0
+offset_top = 20.0
+offset_right = 1180.0
+offset_bottom = 20.0
+
+[node name="LeaveButton" parent="." instance=ExtResource("3_lbc0m")]
+layout_mode = 1
+offset_left = 1080.0
+offset_top = 20.0
+offset_right = 1080.0
+offset_bottom = 20.0

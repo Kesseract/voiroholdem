@@ -1,55 +1,31 @@
-extends Control
+extends Node2D
 
-@onready var sprite = $Sprite
-@onready var toggle_button = $Button
+var game_process
+var table_backend
 
-signal user_input_received
+# 必要な値
+var bet_size = { "name": "table_1 bb:2 sb:1", "bb": 2, "sb": 1 }
+var buy_in = 100
+var dealer_name = "ずんだもん"
+var selected_cpus = ["四国めたん", "ずんだもん", "春日部つむぎ", "雨晴はう"]
 
-var step_index = 0
-var total_steps = 5
-var animation_in_progress = false
+func _init():
+	# game_process = GameProcessBackend.new()
+	# add_child(game_process)
+	table_backend = TableBackend.new(bet_size, buy_in, dealer_name, selected_cpus)
+
+	print(table_backend)
+	print(table_backend.player.participant_name)
+	for cpu_player in table_backend.cpu_players:
+		print(cpu_player.participant_name)
+	print(table_backend.dealer.participant_name)
+
+	# Table.tscn をロードして表示
+	var table_scene = preload("res://scenes/gamecomponents/Table.tscn").instantiate()
+	add_child(table_scene)
+
+	# TableBackend のデータを Table に渡して連携
+	table_scene.setup_with_backend(table_backend)
 
 func _ready():
-    toggle_button.visible = false
-    toggle_button.connect("toggled", Callable(self, "_on_toggle_button_toggled"))
-    start_animation()
-
-func start_animation():
-    animation_in_progress = true
-    _next_step()
-
-func _next_step():
-    if step_index < total_steps:
-        print("Step ", step_index + 1, " started.")
-
-        # 3ステップ目でユーザー入力を待機
-        if step_index == 2:
-            print("Waiting for user input...")
-            toggle_button.visible = true
-        else:
-            # アニメーションステップを進める
-            _perform_step()
-    else:
-        print("Animation completed.")
-        animation_in_progress = false
-
-func _perform_step():
-    # アニメーションの疑似処理
-    sprite.position += Vector2(10, 0)
-    print("Step ", step_index + 1, " completed.")
-
-    # 次のステップに進むタイマーを設定
-    get_tree().create_timer(0.5).connect("timeout", Callable(self, "_on_step_timer_timeout"))
-
-func _on_step_timer_timeout():
-    step_index += 1
-    _next_step()
-
-func _on_toggle_button_toggled(button_pressed: bool):
-    if button_pressed:
-        print("Toggle button pressed.")
-        toggle_button.button_pressed = false
-        toggle_button.visible = false
-        emit_signal("user_input_received")
-        step_index += 1
-        _next_step()
+	pass

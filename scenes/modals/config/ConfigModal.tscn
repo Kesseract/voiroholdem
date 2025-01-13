@@ -1,0 +1,168 @@
+[gd_scene load_steps=2 format=3 uid="uid://10yh4vv1iyic"]
+
+[ext_resource type="Script" path="res://scripts/modals/config/configmodal.gd" id="1_57nxh"]
+
+[node name="ConfigModal" type="Window"]
+position = Vector2i(0, 36)
+size = Vector2i(500, 600)
+script = ExtResource("1_57nxh")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -169.5
+offset_top = -200.0
+offset_right = 169.5
+offset_bottom = 200.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 30
+
+[node name="BGM" type="VBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/BGM"]
+layout_mode = 2
+theme_override_constants/separation = 270
+
+[node name="BGM" type="Label" parent="VBoxContainer/BGM/HBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "BGM"
+
+[node name="Value" type="Label" parent="VBoxContainer/BGM/HBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "100%"
+
+[node name="HSlider" type="HSlider" parent="VBoxContainer/BGM"]
+layout_mode = 2
+max_value = 1.0
+step = 0.1
+value = 0.5
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer/BGM"]
+layout_mode = 2
+theme_override_constants/separation = 350
+
+[node name="MIN" type="Label" parent="VBoxContainer/BGM/HBoxContainer2"]
+layout_mode = 2
+text = "MIN"
+
+[node name="MAX" type="Label" parent="VBoxContainer/BGM/HBoxContainer2"]
+layout_mode = 2
+text = "MAX"
+
+[node name="SE" type="VBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/SE"]
+layout_mode = 2
+theme_override_constants/separation = 310
+
+[node name="SE" type="Label" parent="VBoxContainer/SE/HBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "SE"
+
+[node name="Value" type="Label" parent="VBoxContainer/SE/HBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "100%"
+
+[node name="HSlider" type="HSlider" parent="VBoxContainer/SE"]
+layout_mode = 2
+max_value = 1.0
+step = 0.1
+value = 0.5
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer/SE"]
+layout_mode = 2
+theme_override_constants/separation = 350
+
+[node name="MIN" type="Label" parent="VBoxContainer/SE/HBoxContainer2"]
+layout_mode = 2
+text = "MIN"
+
+[node name="MAX" type="Label" parent="VBoxContainer/SE/HBoxContainer2"]
+layout_mode = 2
+text = "MAX"
+
+[node name="VOICE" type="VBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/VOICE"]
+layout_mode = 2
+theme_override_constants/separation = 255
+
+[node name="VOICE" type="Label" parent="VBoxContainer/VOICE/HBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "VOICE"
+
+[node name="Value" type="Label" parent="VBoxContainer/VOICE/HBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "100%"
+
+[node name="HSlider" type="HSlider" parent="VBoxContainer/VOICE"]
+layout_mode = 2
+max_value = 1.0
+step = 0.1
+value = 0.5
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer/VOICE"]
+layout_mode = 2
+theme_override_constants/separation = 350
+
+[node name="MIN" type="Label" parent="VBoxContainer/VOICE/HBoxContainer2"]
+layout_mode = 2
+text = "MIN"
+
+[node name="MAX" type="Label" parent="VBoxContainer/VOICE/HBoxContainer2"]
+layout_mode = 2
+text = "MAX"
+
+[node name="WindowSize" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 30
+
+[node name="Label" type="Label" parent="VBoxContainer/WindowSize"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "ウィンドウサイズ"
+
+[node name="OptionButton" type="OptionButton" parent="VBoxContainer/WindowSize"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+
+[node name="FullScreen" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 50
+
+[node name="Label" type="Label" parent="VBoxContainer/FullScreen"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "フルスクリーン"
+
+[node name="Value" type="HBoxContainer" parent="VBoxContainer/FullScreen"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="FullScreen" type="Button" parent="VBoxContainer/FullScreen/Value"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "FullScreen"
+
+[node name="Window" type="Button" parent="VBoxContainer/FullScreen/Value"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+disabled = true
+text = "Window"
+
+[node name="Close" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Close"

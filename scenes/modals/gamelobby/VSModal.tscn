@@ -1,0 +1,88 @@
+[gd_scene load_steps=2 format=3 uid="uid://wps43atebw8i"]
+
+[ext_resource type="Script" path="res://scripts/modals/gamelobby/vsmodal.gd" id="1_38lds"]
+
+[node name="VSModal" type="Window"]
+position = Vector2i(0, 36)
+size = Vector2i(500, 600)
+script = ExtResource("1_38lds")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -125.0
+offset_top = -225.0
+offset_right = 142.0
+offset_bottom = 227.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 50
+alignment = 1
+
+[node name="BetSize" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Label" type="Label" parent="VBoxContainer/BetSize"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "ベットサイズ"
+
+[node name="OptionButton" type="OptionButton" parent="VBoxContainer/BetSize"]
+layout_mode = 2
+
+[node name="AmountValue" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Label" type="Label" parent="VBoxContainer/AmountValue"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "持ち込む金額"
+
+[node name="LineEdit" type="LineEdit" parent="VBoxContainer/AmountValue"]
+layout_mode = 2
+
+[node name="Dealer" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Label" type="Label" parent="VBoxContainer/Dealer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "ディーラー"
+
+[node name="OptionButton" type="OptionButton" parent="VBoxContainer/Dealer"]
+layout_mode = 2
+
+[node name="SelectChara" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Label" type="Label" parent="VBoxContainer/SelectChara"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "対戦相手"
+
+[node name="OptionButton2" type="OptionButton" parent="VBoxContainer/SelectChara"]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Start" type="Button" parent="VBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "Start"
+
+[node name="Close" type="Button" parent="VBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "Close"
