@@ -1,11 +1,90 @@
-[gd_scene load_steps=2 format=3 uid="uid://pkbe323ce3bt"]
+[gd_scene load_steps=11 format=3 uid="uid://bvj6h715256aw"]
 
-[ext_resource type="Script" path="res://scripts/testbackend.gd" id="1_74tbl"]
+[ext_resource type="Script" path="res://scripts/testbackend.gd" id="1_vrenw"]
+[ext_resource type="Texture2D" uid="uid://clnqgss5172v5" path="res://assets/textures/Game/fold_normal.png" id="2_l3qk1"]
+[ext_resource type="Texture2D" uid="uid://ck1bb56ug4il6" path="res://assets/textures/Game/fold_pressed.png" id="3_8dyxw"]
+[ext_resource type="Texture2D" uid="uid://tqjig6ltmhjg" path="res://assets/textures/Game/fold_hover.png" id="4_cefj0"]
+[ext_resource type="Texture2D" uid="uid://vg7c2821cdno" path="res://assets/textures/Game/checkcall_normal.png" id="5_wmva5"]
+[ext_resource type="Texture2D" uid="uid://7wtgou5nocah" path="res://assets/textures/Game/checkcall_pressed.png" id="6_h3da2"]
+[ext_resource type="Texture2D" uid="uid://b5j26nanotnyl" path="res://assets/textures/Game/checkcall_hover.png" id="7_o2ggb"]
+[ext_resource type="Texture2D" uid="uid://bg7l0xdtkiva1" path="res://assets/textures/Game/betraise_normal.png" id="8_as6lm"]
+[ext_resource type="Texture2D" uid="uid://dus55orpg4pct" path="res://assets/textures/Game/betraise_pressed.png" id="9_c806b"]
+[ext_resource type="Texture2D" uid="uid://cqmfbjvcrd00d" path="res://assets/textures/Game/betraise_hover.png" id="10_0wpie"]
 
 [node name="TestBackend" type="Control"]
 layout_mode = 3
 anchors_preset = 0
-script = ExtResource("1_74tbl")
+script = ExtResource("1_vrenw")
+
+[node name="FoldButton" type="TextureButton" parent="."]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 679.0
+offset_right = 427.0
+offset_bottom = 719.0
+toggle_mode = true
+action_mode = 0
+texture_normal = ExtResource("2_l3qk1")
+texture_pressed = ExtResource("3_8dyxw")
+texture_hover = ExtResource("4_cefj0")
+
+[node name="CheckCallButton" type="TextureButton" parent="."]
+layout_mode = 0
+offset_left = 427.0
+offset_top = 679.0
+offset_right = 853.0
+offset_bottom = 719.0
+toggle_mode = true
+action_mode = 0
+texture_normal = ExtResource("5_wmva5")
+texture_pressed = ExtResource("6_h3da2")
+texture_hover = ExtResource("7_o2ggb")
+
+[node name="BetRaiseButton" type="TextureButton" parent="."]
+layout_mode = 0
+offset_left = 853.0
+offset_top = 679.0
+offset_right = 1279.0
+offset_bottom = 719.0
+toggle_mode = true
+action_mode = 0
+texture_normal = ExtResource("8_as6lm")
+texture_pressed = ExtResource("9_c806b")
+texture_hover = ExtResource("10_0wpie")
+
+[node name="BetSize" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 855.0
+offset_top = 584.0
+offset_right = 1276.0
+offset_bottom = 676.0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="BetSize"]
+layout_mode = 2
+
+[node name="LineEdit" type="LineEdit" parent="BetSize/HBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+placeholder_text = "ベットサイズ"
+alignment = 3
+expand_to_text_length = true
+
+[node name="HSlider" type="HSlider" parent="BetSize"]
+layout_mode = 2
+min_value = 1.0
+value = 50.0
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="BetSize"]
+layout_mode = 2
+theme_override_constants/separation = 350
+
+[node name="MIN" type="Label" parent="BetSize/HBoxContainer2"]
+layout_mode = 2
+text = "MIN"
+
+[node name="MAX" type="Label" parent="BetSize/HBoxContainer2"]
+layout_mode = 2
+text = "MAX"
 
 [node name="ScrollContainer" type="ScrollContainer" parent="."]
 layout_mode = 0

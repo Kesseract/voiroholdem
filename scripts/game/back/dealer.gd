@@ -1,3 +1,4 @@
+extends Node
 class_name DealerBackend
 
 # 属性
@@ -7,6 +8,8 @@ var bet_record: Array = []
 var community_cards: Array = []
 var hand_evaluator
 var game_process
+
+signal n_moving_plus
 
 # 初期化
 func _init():
@@ -34,6 +37,9 @@ func to_str() -> String:
 # バーンカードを行う
 func burn_card():
 	var card = deck.draw_card()
+	add_child(card)
+	card.wait_to(0.5)
+	emit_signal("n_moving_plus")
 
 # プレイヤーにカードを配る
 func deal_card(seat_assignments, start_position := 0):
@@ -49,14 +55,12 @@ func deal_card(seat_assignments, start_position := 0):
 		if current_player:
 			var card = deck.draw_card()
 			current_player.player_script.hand.append(card)
+			add_child(card)
+			card.wait_wait_to(i * 0.3, 0.5)
+			emit_signal("n_moving_plus")
+
 
 func set_initial_button(seat_assignments):
-
-	# バーンカードを1枚捨てる
-	burn_card()
-
-	# 各プレイヤーに1枚ずつカードを配る
-	deal_card(seat_assignments)
 
 	# 座席リストを取得
 	var seats = seat_assignments.keys()

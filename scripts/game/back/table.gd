@@ -1,3 +1,4 @@
+extends Node
 class_name TableBackend
 
 var sb
@@ -5,11 +6,22 @@ var bb
 var buy_in
 var dealer_name
 var selected_cpus
+var seeing
+
 var game_process
+var front
 
 var player
 var cpu_players = []
 var dealer
+
+var seat_assignments = {
+	"Seat1": null, "Seat2": null, "Seat3": null, "Seat4": null,
+	"Seat5": null, "Seat6": null, "Seat7": null,
+	"Seat8": null, "Seat9": null, "Seat10": null, "Dealer": null,
+}
+
+signal n_moving_plus
 
 # 現在の状態を文字列として取得する
 func to_str() -> String:
@@ -22,16 +34,22 @@ func to_str() -> String:
 	result += "=======================\n"
 	return result
 
-func _init(_bet_size, _buy_in, _dealer_name, _selected_cpus):
+func _init(_game_process, _bet_size, _buy_in, _dealer_name, _selected_cpus, _seeing):
+	game_process = _game_process
 	sb = _bet_size["sb"]
 	bb = _bet_size["bb"]
 	buy_in = _buy_in
 	dealer_name = _dealer_name
 	selected_cpus = _selected_cpus
+	seeing = _seeing
+
+	if not seeing:
+		var front_instance = load("res://scenes/gamecomponents/Table.tscn")
+		front = front_instance.instantiate()
 
 	# 初期化処理
 	# 操作プレイヤーを作る
-	player = ParticipantBackend.new("test", buy_in, false, "player")
+	player = ParticipantBackend.new("test", buy_in, false, "player", seeing)
 
 	# CPUを作る
 	var dealer_flg = false
@@ -39,12 +57,53 @@ func _init(_bet_size, _buy_in, _dealer_name, _selected_cpus):
 		var role = "player"
 		if cpu_name == dealer_name:
 			role = "playing_dealer"
-		var cpu_player = ParticipantBackend.new(cpu_name, buy_in, true, role)
-		cpu_players.append(cpu_player)
+		var cpu_player = ParticipantBackend.new(cpu_name, buy_in, true, role, seeing)
 
 		if role == "playing_dealer":
 			dealer = cpu_player
 			dealer_flg = true
+		else:
+			cpu_players.append(cpu_player)
 
 	if !dealer_flg:
-		dealer = ParticipantBackend.new(dealer_name, buy_in, true, "dealer")
+		dealer = ParticipantBackend.new(dealer_name, buy_in, true, "dealer", seeing)
+
+func seat_player():
+	pass
+
+func seat_dealer():
+	seat_assignments["Dealer"] = dealer
+
+	if not seeing:
+		dealer.front.move_to()
+	else:
+		add_child(dealer)
+		dealer.wait_to(0.5)
+		dealer.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
+
+	emit_signal("n_moving_plus")
+
+
+func seat_cpus():
+	var available_seats = []  # 空いている席のリストを作成
+	for seat in seat_assignments.keys():
+		if seat_assignments[seat] == null and seat != "Dealer":
+			available_seats.append(seat)
+
+	available_seats.shuffle()  # 席の順番をシャッフル
+
+	var wait = 0
+	for cpu in cpu_players:
+		if available_seats.size() > 0:
+			var random_seat = available_seats.pop_front()  # シャッフル済みリストから1つ取り出す
+			seat_assignments[random_seat] = cpu
+
+			if not seeing:
+				cpu.front.wait_move_to()
+			else:
+				add_child(cpu)
+				cpu.wait_wait_to(wait, 0.5)
+				cpu.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
+			wait += 0.3
+
+			emit_signal("n_moving_plus")

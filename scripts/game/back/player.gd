@@ -1,7 +1,8 @@
+extends Node
 class_name PlayerBackend
 
 # プロパティ
-var name: String
+var player_name: String
 var chips: int
 var is_cpu: bool
 var hand: Array = []
@@ -21,14 +22,14 @@ var selected_bet_amount: int = 0  # プレイヤーが選択したベット額
 
 # 初期化
 func _init(_name: String, _chips: int, _is_cpu: bool = false):
-	name = _name
+	player_name = _name
 	chips = _chips
 	is_cpu = _is_cpu
 
 # 現在の状態を文字列として取得する
 func to_str() -> String:
 	var result = "=== PlayerBackend 状態 ===\n"
-	result += "プレイヤー名: " + str(name) + "\n"
+	result += "プレイヤー名: " + str(player_name) + "\n"
 	result += "チップ: " + str(chips) + "\n"
 	# hand の情報を文字列として取得
 	if hand.size() > 0:
