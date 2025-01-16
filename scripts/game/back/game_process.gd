@@ -112,7 +112,7 @@ func _process(delta):
 			print("State.INIT")
 			table_backend = TableBackend.new(self, bet_size, buy_in, dealer_name, selected_cpus, seeing)
 			table_backend.connect("n_moving_plus", Callable(self, "_on_n_moving_plus"))
-			table_backend.dealer.connect("n_moving_plus", Callable(self, "_on_n_moving_plus"))
+			table_backend.dealer.dealer_script.connect("n_moving_plus", Callable(self, "_on_n_moving_plus"))
 			add_child(table_backend)
 		State.SEATING_PLAYER:
 			print("State.SEATING_PLAYER")

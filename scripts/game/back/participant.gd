@@ -35,10 +35,8 @@ func _init(_participant_name, _chips, _is_cpu, _role, _seeing):
 	role = _role
 	if role != "dealer":
 		player_script = PlayerBackend.new(participant_name, chips, is_cpu)
-		add_child(player_script)
 	if role != "player":
 		dealer_script = DealerBackend.new()
-		add_child(player_script)
 	if not _seeing:
 		var front_instance = load("res://scenes/gamecomponents/Participant.tscn")
 		front = front_instance.instantiate()
