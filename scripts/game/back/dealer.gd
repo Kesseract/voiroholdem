@@ -57,10 +57,11 @@ func to_str() -> String:
 # バーンカードを行う
 func burn_card():
 	var card = deck.draw_card()
-	card.wait_to(0.5)
+	print(card)
 	card.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
-	burn_cards.append(card)
 	emit_signal("n_moving_plus")
+	card.wait_to(0.5)
+	burn_cards.append(card)
 
 # プレイヤーにカードを配る
 func deal_card(seat_assignments, start_position := 0):
@@ -288,9 +289,12 @@ func pot_collect(seat_assignments: Dictionary) -> int:
 	for seat in seat_assignments.keys():
 		var player = seat_assignments[seat]
 		if player != null:
-			if not player.player_script.is_folded:
+			if not player.player_script.is_folded and player.player_script.current_bet > 0:
 				active_bets.append(player.player_script.current_bet)
 	active_bets.sort()
+
+	if active_bets.size() == 0:
+		return 0
 
 	var last_bet = 0
 	var i = 0
@@ -378,23 +382,13 @@ func compare_players(a, b):
 
 	return false
 
-# ポットをプレイヤーに分配
-func distribute_pots(seat_assignments: Dictionary):
+func evaluate_hand(seat_assignments: Dictionary):
 	# フォールドしていないプレイヤーを取得
 	var active_players = []
 	for seat in seat_assignments.keys():
 		var player = seat_assignments[seat]
 		if player != null and not player.player_script.is_folded:
 			active_players.append(player)
-
-	# プレイヤーが1人ならそのまま全ポットを獲得
-	if active_players.size() == 1:
-		var winner = active_players[0]
-		var total_chips = 0
-		for pot in pots:
-			total_chips += pot.total
-		winner.player_script.chips += total_chips
-		return
 
 	# 複数人の場合、手を評価
 	for player in active_players:
@@ -405,15 +399,30 @@ func distribute_pots(seat_assignments: Dictionary):
 	# プレイヤーをソート
 	active_players.sort_custom(compare_players)
 
+	return active_players
+
+# ポットをプレイヤーに分配
+func distribute_pots(active_players):
+
+	# プレイヤーが1人ならそのまま全ポットを獲得
+	if active_players.size() == 1:
+		var winner = active_players[0]
+		var total_chips = 0
+		for pot in pots:
+			total_chips += pot.total
+		winner.player_script.chips += total_chips
+		var chip = ChipBackend.new()
+		chip.wait_to(0.5)
+		chip.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
+		add_child(chip)
+		emit_signal("n_moving_plus")
+		return
+
 	# ポットごとに分配
 	for pot in pots:
 		var contributors = pot.contributions.keys()
 		if contributors.size() > 0:
 			var eligible_players = active_players.filter(func(player): return player.player_script.player_name in contributors)
-
-			# チェック: eligible_playersが空の場合、スキップ
-			if eligible_players.size() == 0:
-				continue
 
 			# 最も強いプレイヤーを取得
 			var strongest_hand = eligible_players[0].player_script.hand_rank
@@ -421,16 +430,26 @@ func distribute_pots(seat_assignments: Dictionary):
 
 			# 勝者にポットを分配
 			var chips_per_winner = pot.total / winners.size()
+			var i = 0
 			for winner in winners:
 				winner.player_script.chips += chips_per_winner
+				var chip = ChipBackend.new()
+				chip.wait_wait_to(i, 0.5)
+				chip.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
+				add_child(chip)
+				emit_signal("n_moving_plus")
+				i += 0.3
 
 # ラウンドの終了後に必要な情報をリセットする
 func reset_round(seat_assignments: Dictionary):
 	# 1. 各プレイヤーのカレントベットと手札をリセット
+	var i = 0
 	for seat in seat_assignments.keys():
 		var player = seat_assignments[seat]
 		if player != null:
 			player.player_script.hand = []
+			player.player_script.wait_wait_to(i, 0.5)
+			emit_signal("n_moving_plus")
 			player.player_script.current_bet = 0  # 現在のベット額
 			player.player_script.last_action = []  # 最後のアクションを保存する属性
 			player.player_script.has_acted = false
@@ -438,8 +457,12 @@ func reset_round(seat_assignments: Dictionary):
 			player.player_script.is_all_in = false
 			player.player_script.hand_category = null
 			player.player_script.hand_rank = null
-	# 2. コミュニティカードのリセット
+			i += 0.3
+	# 2. コミュニティカード、バーンカードのリセット
 	community_cards = []
+	burn_cards = []
+	wait_to(0.5)
+	emit_signal("n_moving_plus")
 
 	# 3. ポットのリセット
 	pots.clear()
@@ -450,9 +473,6 @@ func reset_round(seat_assignments: Dictionary):
 
 	# 5. デッキのリセット
 	deck = DeckBackend.new()
-
-	# 6. 表示項目のリセット
-	# シグナルを飛ばす
 
 	# n. その他の必要な情報をリセット（必要に応じて追加）
 
@@ -469,7 +489,6 @@ func move_dealer_button(seat_assignments: Dictionary):
 	# 現在のディーラーのフラグをFalseにする
 	if current_dealer_seat != null:
 		seat_assignments[current_dealer_seat].player_script.is_dealer = false
-		seat_assignments[current_dealer_seat].player_script.set_dealer(current_dealer_seat, false)
 
 	# プレイヤーがいる座席のみをリスト化
 	var active_seats = []
@@ -485,7 +504,9 @@ func move_dealer_button(seat_assignments: Dictionary):
 	# 次のディーラーのフラグをTrueにする
 	if seat_assignments[next_dealer_seat] != null:
 		seat_assignments[next_dealer_seat].player_script.is_dealer = true
-		seat_assignments[next_dealer_seat].player_script.set_dealer(next_dealer_seat, true)
+
+	wait_to(0.5)
+	emit_signal("n_moving_plus")
 
 func wait_wait_to(wait : float, dur : float):
 	waiting_time = wait
