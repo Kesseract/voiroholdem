@@ -49,7 +49,7 @@ func _init(_game_process, _bet_size, _buy_in, _dealer_name, _selected_cpus, _see
 
 	# 初期化処理
 	# 操作プレイヤーを作る
-	player = ParticipantBackend.new("test", buy_in, false, "player", seeing)
+	player = ParticipantBackend.new(game_process, "test", buy_in, false, "player", seeing)
 
 	# CPUを作る
 	var dealer_flg = false
@@ -57,16 +57,17 @@ func _init(_game_process, _bet_size, _buy_in, _dealer_name, _selected_cpus, _see
 		var role = "player"
 		if cpu_name == dealer_name:
 			role = "playing_dealer"
-		var cpu_player = ParticipantBackend.new(cpu_name, buy_in, true, role, seeing)
+		var cpu_player = ParticipantBackend.new(game_process, cpu_name, buy_in, true, role, seeing)
 
 		if role == "playing_dealer":
 			dealer = cpu_player
+			dealer.player_script.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
 			dealer_flg = true
 		else:
 			cpu_players.append(cpu_player)
 
 	if !dealer_flg:
-		dealer = ParticipantBackend.new(dealer_name, buy_in, true, "dealer", seeing)
+		dealer = ParticipantBackend.new(game_process, dealer_name, buy_in, true, "dealer", seeing)
 
 func seat_player():
 	pass
@@ -74,12 +75,11 @@ func seat_player():
 func seat_dealer():
 	seat_assignments["Dealer"] = dealer
 
-	if not seeing:
-		dealer.front.move_to()
-	else:
-		add_child(dealer)
-		dealer.wait_to(0.5)
-		dealer.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
+	add_child(dealer)
+	dealer.dealer_script.wait_to(0.5)
+	dealer.dealer_script.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
+	dealer.dealer_script.connect("n_active_players_plus", Callable(game_process, "_on_n_active_players_plus"))
+	dealer.dealer_script.connect("action_finished", Callable(game_process, "_on_action_finished"))
 
 	emit_signal("n_moving_plus")
 
@@ -98,12 +98,9 @@ func seat_cpus():
 			var random_seat = available_seats.pop_front()  # シャッフル済みリストから1つ取り出す
 			seat_assignments[random_seat] = cpu
 
-			if not seeing:
-				cpu.front.wait_move_to()
-			else:
-				add_child(cpu)
-				cpu.wait_wait_to(wait, 0.5)
-				cpu.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
+			add_child(cpu)
+			cpu.player_script.wait_wait_to(wait, 0.5)
+			cpu.player_script.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
 			wait += 0.3
 
 			emit_signal("n_moving_plus")

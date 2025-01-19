@@ -48,6 +48,7 @@ func move_to(dst : Vector2, dur : float):
 	move_dur = dur
 	move_elapsed = 0.0
 	moving = true
+
 func _process(delta):
 	if moving:		# 移動処理中
 		move_elapsed += delta	# 経過時間

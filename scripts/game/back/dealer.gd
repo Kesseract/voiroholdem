@@ -6,17 +6,30 @@ var deck
 var pots: Array = []
 var bet_record: Array = []
 var community_cards: Array = []
+var burn_cards: Array = []
 var hand_evaluator
 var game_process
 
+var waiting_time = 0.0			# ウェイト時間（単位：秒）
+var moving = false
+var move_dur = 0.0				# 移動所要時間（単位：秒）
+var move_elapsed = 0.0			# 移動経過時間（単位：秒）
+
+signal waiting_finished
+signal action_finished
+
 signal n_moving_plus
+signal n_active_players_plus
 
 # 初期化
-func _init():
+func _init(_game_process):
+	game_process = _game_process
 	deck = DeckBackend.new()
+	add_child(deck)
 	pots.append(PotBackend.new())
 	bet_record = []
 	community_cards = []
+	burn_cards = []
 	hand_evaluator = HandEvaluatorBackend.new()
 
 # 現在の状態を文字列として取得する
@@ -31,14 +44,22 @@ func to_str() -> String:
 		result += "コミュニティカード: " + ", ".join(community_card_strings) + "\n"
 	else:
 		result += "コミュニティカード: なし\n"
+	if burn_cards.size() > 0:
+		var burn_card_strings = []
+		for card in burn_cards:
+			burn_card_strings.append(card.to_str())
+		result += "バーンカード: " + ", ".join(burn_card_strings) + "\n"
+	else:
+		result += "コミュニティカード: なし\n"
 	result += "=======================\n"
 	return result
 
 # バーンカードを行う
 func burn_card():
 	var card = deck.draw_card()
-	add_child(card)
 	card.wait_to(0.5)
+	card.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
+	burn_cards.append(card)
 	emit_signal("n_moving_plus")
 
 # プレイヤーにカードを配る
@@ -55,8 +76,8 @@ func deal_card(seat_assignments, start_position := 0):
 		if current_player:
 			var card = deck.draw_card()
 			current_player.player_script.hand.append(card)
-			add_child(card)
 			card.wait_wait_to(i * 0.3, 0.5)
+			card.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
 			emit_signal("n_moving_plus")
 
 
@@ -65,7 +86,6 @@ func set_initial_button(seat_assignments):
 	# 座席リストを取得
 	var seats = seat_assignments.keys()
 	var dealer_player = seat_assignments[seats[0]]
-	var dealer_seat = "Dealer"
 
 	# 最高のカードを持つプレイヤーを探す
 	for seat in seats:
@@ -75,18 +95,14 @@ func set_initial_button(seat_assignments):
 				(current_player.player_script.hand[0].rank == dealer_player.player_script.hand[0].rank and
 				current_player.player_script.hand[0].suit > dealer_player.player_script.hand[0].suit)):
 				dealer_player = current_player
-				dealer_seat = seat
-
-	# ディーラーを設定
-	dealer_player.player_script.is_dealer = true
-	dealer_player.player_script.set_dealer("Dealer", false)
-	dealer_player.player_script.set_dealer(dealer_seat, true)
 
 	# 全プレイヤーの手札をクリア
 	for seat in seats:
 		var player = seat_assignments[seat]
 		if player:
 			player.player_script.hand.clear()
+			player.player_script.wait_wait_to(0.1, 0.5)
+			emit_signal("n_moving_plus")
 
 	return dealer_player
 
@@ -122,22 +138,30 @@ func get_dealer_button_index(seat_assignments: Dictionary, count: int = 0) -> St
 
 # 各プレイヤーに2枚のホールカードを配る
 func deal_hole_cards(seat_assignments: Dictionary):
-	burn_card()
+
+	var delay_base = 0.2  # 各プレイヤーへのディレイ間隔
+	var card_delay = 0.5  # カード配布アニメーションの時間
+	var total_delay = 0.0
 
 	# 座席リストを取得してソート
 	var seats = seat_assignments.keys()
 
 	var start_position = (seats.find(get_dealer_button_index(seat_assignments, 1))) % seats.size()
+	total_delay = distribute_single_card(seats, start_position, seat_assignments, total_delay, delay_base, card_delay)
 
-	# 各プレイヤーにカードを配る
-	for i in ["Card1", "Card2"]:  # 2枚配る
-		for j in range(seats.size()):
-			var current_position = (start_position + j) % seats.size()
-			var player = seat_assignments[seats[current_position]]
-			if player != null:  # 空の座席をスキップ
-				var card = deck.draw_card()
-				player.player_script.hand.append(card)
-
+# 各プレイヤーに1枚のカードを配る
+func distribute_single_card(seats, start_position, seat_assignments, base_delay, delay_base, card_delay):
+	var delay = base_delay
+	for offset in range(seats.size()):
+		var current_position = (start_position + offset) % seats.size()
+		var player = seat_assignments[seats[current_position]]
+		if player != null:  # 空の座席をスキップ
+			var card = deck.draw_card()
+			player.player_script.hand.append(card)
+			player.player_script.wait_wait_to(delay, card_delay)
+			emit_signal("n_moving_plus")
+			delay += delay_base  # 次のプレイヤーの待機時間を計算
+	return delay
 
 # アクションリストを作成
 func set_action_list(player, current_max_bet) -> Array:
@@ -158,160 +182,104 @@ func set_action_list(player, current_max_bet) -> Array:
 	return action_list
 
 # 選択されたアクションによってプレイヤーの状態を更新
-func selected_action(action, player, current_max_bet, bb_value, seat_name):
+func selected_action(action, player, current_max_bet, bb_value):
 	if action == "fold":
-		player.player_script.fold(seat_name)
+		player.player_script.fold()
 		player.player_script.last_action.append("Fold")
 	elif action == "check":
 		player.player_script.last_action.append("Check")
 	elif action == "call":
 		var call_amount = current_max_bet - player.player_script.current_bet
-		player.player_script.bet(seat_name, call_amount)
+		player.player_script.bet(call_amount)
 		player.player_script.last_action.append("Call")
 	elif action == "bet":
 		var min_bet = bb_value * 2 - player.player_script.current_bet
 		var max_bet = player.player_script.chips
-		var bet_amount = min_bet if player.player_script.chips < min_bet else player.player_script.select_bet_amount(min_bet, max_bet)
+		var bet_amount
+		if player.player_script.chips < min_bet:
+			bet_amount = player.player_script.chips
+		else:
+			bet_amount = player.player_script.select_bet_amount(min_bet, max_bet)
 		if bet_amount == player.player_script.chips:
 			player.player_script.is_all_in = true
 			player.player_script.last_action.append("All-In")
 		else:
 			player.player_script.last_action.append("Bet")
-		player.player_script.bet(seat_name, bet_amount)
+		player.player_script.bet(bet_amount)
 		current_max_bet = bet_amount
 		bet_record.append(player.player_script.current_bet)
 	elif action == "raise":
 		var min_raise = bet_record[-1] - bet_record[-2] + bet_record[-1] - player.player_script.current_bet
 		var max_raise = player.chips
-		var raise_amount = min_raise if player.player_script.chips < min_raise else player.player_script.select_bet_amount(min_raise, max_raise)
+		var raise_amount
+		if player.player_script.chips < min_raise:
+			raise_amount = player.player_script.chips
+		else:
+			raise_amount = player.player_script.select_bet_amount(min_raise, max_raise)
 		current_max_bet = raise_amount
 		if raise_amount == player.player_script.chips:
 			player.player_script.is_all_in = true
 			player.player_script.last_action.append("All-In")
 		else:
 			player.player_script.last_action.append("Raise")
-		player.player_script.bet(seat_name, raise_amount)
+		player.player_script.bet(raise_amount)
 		bet_record.append(player.player_script.current_bet)
 	elif action == "all-in":
 		var all_in_amount = player.player_script.chips
-		player.player_script.bet(seat_name, all_in_amount)
+		player.player_script.bet(all_in_amount)
 		player.player_script.last_action.append("All-In")
 		player.player_script.is_all_in = true
 		if all_in_amount > current_max_bet:
 			current_max_bet = all_in_amount
 
 # ベットラウンドのアクションを処理
-func bet_round(seat_assignments: Dictionary, bb_value: int):
-	var seats = seat_assignments.keys()
-	var start_index = (seats.find(get_dealer_button_index(seat_assignments, 3))) % seats.size()
+func bet_round(seats, start_index: int, seat_assignments: Dictionary, bb_value: int, current_action: int):
 
-	# 全プレイヤーのアクションを未完了に初期化
+	var current_seat = seats[(start_index + current_action) % seats.size()]
+	var player = seat_assignments[current_seat]
+
+	if player == null:
+		return false # 空席はスキップ
+
+	# フォールドまたはオールインしているプレイヤーはスキップ
+	if player.player_script.is_folded or player.player_script.is_all_in:
+		return false
+
+	# 現在の最大掛け金を取得
+	var current_max_bet = 0
 	for seat in seats:
-		var player = seat_assignments[seat]
-		if player != null:
-			player.player_script.has_acted = false
+		var p = seat_assignments[seat]
+		if p != null:
+			current_max_bet = max(current_max_bet, p.player_script.current_bet)
 
-	while true:
-		# 各プレイヤーに対してアクションを実行
-		for i in range(seats.size()):
-			var current_seat = seats[(start_index + i) % seats.size()]
-			var player = seat_assignments[current_seat]
+	var action_list = set_action_list(player, current_max_bet)
 
-			if player == null:
-				continue  # 空席はスキップ
+	var action = player.player_script.select_action(action_list)
 
-			# アクティブなプレイヤーを取得
-			var active_players = []
-			for seat in seats:
-				var p = seat_assignments[seat]
-				if p != null and not p.player_script.is_folded:
-					active_players.append(p)
+	# 選択したアクションを実行
+	selected_action(action, player, current_max_bet, bb_value)
+	player.player_script.has_acted = true
 
-			# アクティブなプレイヤーが1人だけの場合、アクションを終了
-			if active_players.size() == 1:
-				return active_players
+	# 再度アクティブなプレイヤーを更新
+	var active_players = []
+	for seat in seats:
+		var p = seat_assignments[seat]
+		if p != null and not p.player_script.is_folded and not p.player_script.is_all_in:
+			active_players.append(p)
 
-			# フォールドまたはオールインしているプレイヤーはスキップ
-			if player.player_script.is_folded:
-				continue
+	# レイズやベットの場合、他プレイヤーのアクションフラグをリセット
+	if action in ["bet", "raise", "all-in"]:
+		for other_player in active_players:
+			if other_player != player:
+				if other_player.player_script.has_acted:
+					emit_signal("n_active_players_plus")
+				other_player.player_script.has_acted = false
 
-			# 全てのアクティブプレイヤーがオールインしているか確認
-			var all_players_all_in = true
-			for p in active_players:
-				if not p.player_script.is_folded:
-					if not p.player_script.is_all_in:
-						all_players_all_in = false
-			if all_players_all_in:
-				return active_players
 
-			if player.player_script.is_all_in:
-				continue
+	player.player_script.wait_to(1.0)
+	emit_signal("action_finished")
 
-			# 現在の最大掛け金を取得
-			var current_max_bet = 0
-			for seat in seats:
-				var p = seat_assignments[seat]
-				if p != null:
-					current_max_bet = max(current_max_bet, p.player_script.current_bet)
-
-			# プレイヤーが選択可能なアクションを取得
-			var slider_min_size = 1
-			if bet_record.size() >= 2:
-				slider_min_size = bet_record[-1] - bet_record[-2] + bet_record[-1] - player.player_script.current_bet
-			else:
-				slider_min_size = bb_value * 2 - player.player_script.current_bet
-
-			if !player.player_script.is_cpu:
-				var slider_max_size = player.player_script.chips
-				if slider_min_size > slider_max_size:
-					slider_min_size = slider_max_size
-
-			var action_list = set_action_list(player, current_max_bet)
-
-			var action = player.player_script.select_action(action_list)
-
-			# 選択したアクションを実行
-			selected_action(action, player, current_max_bet, bb_value, current_seat)
-			player.player_script.has_acted = true
-
-			# 再度アクティブなプレイヤーを更新
-			active_players.clear()
-			for seat in seats:
-				var p = seat_assignments[seat]
-				if p != null and not p.player_script.is_folded:
-					active_players.append(p)
-
-			# レイズやベットの場合、他プレイヤーのアクションフラグをリセット
-			if action in ["bet", "raise", "all-in"]:
-				for other_player in active_players:
-					if other_player != player:
-						other_player.player_script.has_acted = false
-
-			# アクティブなプレイヤーのベット金額を確認
-			var active_players_bet = []
-			for p in active_players:
-				active_players_bet.append(p.player_script.current_bet)
-
-			# アクティブなプレイヤーが全員アクション済みまたはオールインの場合
-			var active_players_acted = true
-			for p in active_players:
-				if not (p.player_script.has_acted or p.player_script.is_all_in):
-					active_players_acted = false
-					break
-
-			if active_players_bet.size() >= 1 and active_players_acted:
-				bet_record = [0]
-				return active_players
-
-			var all_in_players = []
-			for p in active_players:
-				if player.player_script.is_all_in:
-					all_in_players.append(player)
-
-			if all_in_players.size() == active_players.size() and active_players_acted:
-				bet_record = [0]
-				return active_players
-
+	return true
 
 # プレイヤーの賭け金をポットとして集める
 func pot_collect(seat_assignments: Dictionary) -> int:
@@ -325,6 +293,7 @@ func pot_collect(seat_assignments: Dictionary) -> int:
 	active_bets.sort()
 
 	var last_bet = 0
+	var i = 0
 	for index in range(active_bets.size()):
 		var bet = active_bets[index]
 
@@ -338,13 +307,20 @@ func pot_collect(seat_assignments: Dictionary) -> int:
 			pots.append(pot)
 
 		# 各プレイヤーの貢献を計算
+
 		for seat in seat_assignments.keys():
 			var player = seat_assignments[seat]
 			if player != null and not player.player_script.is_folded:
 				var contribution = min(bet - last_bet, player.player_script.current_bet)
 				if contribution > 0:
-					pot.add_contribution(player.player_script.name, contribution)
+					pot.add_contribution(player.player_script.player_name, contribution)
 					player.player_script.current_bet -= contribution
+					var chip = ChipBackend.new()
+					chip.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
+					add_child(chip)
+					chip.wait_wait_to(i * 0.3, 0.5)
+					emit_signal("n_moving_plus")
+					i += 1
 
 		last_bet = bet
 
@@ -357,7 +333,13 @@ func pot_collect(seat_assignments: Dictionary) -> int:
 				if pots.size() == 0 or player.player_script.current_bet > pots[-1].total:
 					var pot = PotBackend.new()
 					pots.append(pot)
-				pots[-1].add_contribution(player.player_script.name, player.player_script.current_bet)
+				pots[-1].add_contribution(player.player_script.player_name, player.player_script.current_bet)
+				var chip = ChipBackend.new()
+				chip.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
+				add_child(chip)
+				chip.wait_wait_to(i * 0.3, 0.5)
+				emit_signal("n_moving_plus")
+				i += 1
 				player.player_script.current_bet = 0
 
 			player.player_script.last_action.clear()
@@ -372,13 +354,14 @@ func pot_collect(seat_assignments: Dictionary) -> int:
 
 # 指定された枚数のコミュニティカードを公開する
 func reveal_community_cards(num_cards: Array) -> Array:
-	# デッキからカードをバーン
-	burn_card()
 
 	# 指定された枚数のカードを公開
 	for place in num_cards:
 		var card = deck.draw_card()  # デッキからカードを1枚引く
 		community_cards.append(card)
+		card.wait_to(0.5)
+		card.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
+		emit_signal("n_moving_plus")
 
 	return community_cards
 
@@ -426,7 +409,7 @@ func distribute_pots(seat_assignments: Dictionary):
 	for pot in pots:
 		var contributors = pot.contributions.keys()
 		if contributors.size() > 0:
-			var eligible_players = active_players.filter(func(player): return player.player_script.name in contributors)
+			var eligible_players = active_players.filter(func(player): return player.player_script.player_name in contributors)
 
 			# チェック: eligible_playersが空の場合、スキップ
 			if eligible_players.size() == 0:
@@ -503,3 +486,24 @@ func move_dealer_button(seat_assignments: Dictionary):
 	if seat_assignments[next_dealer_seat] != null:
 		seat_assignments[next_dealer_seat].player_script.is_dealer = true
 		seat_assignments[next_dealer_seat].player_script.set_dealer(next_dealer_seat, true)
+
+func wait_wait_to(wait : float, dur : float):
+	waiting_time = wait
+	#wait_elapsed = 0.0
+	wait_to(dur)
+
+func wait_to(dur : float):
+	move_dur = dur
+	move_elapsed = 0.0
+	moving = true
+
+func _process(delta):
+	if waiting_time > 0.0:
+		waiting_time -= delta
+		return
+	if moving:		# 移動処理中
+		move_elapsed += delta	# 経過時間
+		move_elapsed = min(move_elapsed, move_dur)	# 行き過ぎ防止
+		if move_elapsed == move_dur:		# 移動終了の場合
+			moving = false
+			emit_signal("waiting_finished")	# 移動終了シグナル発行

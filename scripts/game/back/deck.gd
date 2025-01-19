@@ -1,3 +1,4 @@
+extends Node
 class_name DeckBackend
 
 var cards: Array = []
@@ -15,6 +16,7 @@ func generate_deck():
 			# Cardシーンをインスタンス化してプロパティを設定
 			var card_instance = CardBackend.new(rank, suit)
 			cards.append(card_instance)  # インスタンス化したカードをデッキに追加
+			add_child(card_instance)
 
 	shuffle()
 
