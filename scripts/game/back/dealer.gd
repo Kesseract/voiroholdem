@@ -62,7 +62,7 @@ func burn_card():
 	var card = deck.draw_card()
 	card.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
 	emit_signal("n_moving_plus")
-	card.wait_to(0.5)
+	card.wait_to(1.0)
 	burn_cards.append(card)
 
 # プレイヤーにカードを配る
@@ -282,7 +282,6 @@ func bet_round(seats, start_index: int, seat_assignments: Dictionary, bb_value: 
 					emit_signal("n_active_players_plus")
 				other_player.player_script.has_acted = false
 
-
 	player.player_script.wait_to(1.0)
 	emit_signal("action_finished")
 
@@ -369,7 +368,7 @@ func reveal_community_cards(num_cards: Array) -> Array:
 	for place in num_cards:
 		var card = deck.draw_card()  # デッキからカードを1枚引く
 		community_cards.append(card)
-		card.wait_to(0.5)
+		card.wait_to(1.0)
 		card.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
 		emit_signal("n_moving_plus")
 
@@ -418,7 +417,7 @@ func distribute_pots(active_players):
 			total_chips += pot.total
 		winner.player_script.chips += total_chips
 		var chip = ChipBackend.new()
-		chip.wait_to(0.5)
+		chip.wait_to(1.0)
 		chip.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
 		add_child(chip)
 		emit_signal("n_moving_plus")
@@ -486,7 +485,7 @@ func reset_round(seat_assignments: Dictionary, buy_in: int):
 	# 2. コミュニティカード、バーンカードのリセット
 	community_cards = []
 	burn_cards = []
-	wait_to(0.5)
+	wait_to(1.0)
 	emit_signal("n_moving_plus")
 
 	# 3. ポットのリセット
@@ -531,7 +530,7 @@ func move_dealer_button(seat_assignments: Dictionary):
 	if seat_assignments[next_dealer_seat] != null:
 		seat_assignments[next_dealer_seat].player_script.is_dealer = true
 
-	wait_to(0.5)
+	wait_to(1.0)
 	emit_signal("n_moving_plus")
 
 func wait_wait_to(wait : float, dur : float):
