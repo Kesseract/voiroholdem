@@ -21,10 +21,13 @@ signal action_finished
 signal n_moving_plus
 signal n_active_players_plus
 
+signal n_number_reset
+
 # 初期化
 func _init(_game_process):
 	game_process = _game_process
 	deck = DeckBackend.new()
+	deck.name = "DeckBackend"
 	add_child(deck)
 	pots.append(PotBackend.new())
 	bet_record = []
@@ -57,7 +60,6 @@ func to_str() -> String:
 # バーンカードを行う
 func burn_card():
 	var card = deck.draw_card()
-	print(card)
 	card.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
 	emit_signal("n_moving_plus")
 	card.wait_to(0.5)
@@ -168,7 +170,7 @@ func distribute_single_card(seats, start_position, seat_assignments, base_delay,
 func set_action_list(player, current_max_bet) -> Array:
 	var action_list = ["fold"]
 
-	if bet_record.size() >= 2:
+	if bet_record.size() >= 1:
 		if player.player_script.chips <= current_max_bet - player.player_script.current_bet:
 			action_list.append("all-in")
 		else:
@@ -210,7 +212,11 @@ func selected_action(action, player, current_max_bet, bb_value):
 		current_max_bet = bet_amount
 		bet_record.append(player.player_script.current_bet)
 	elif action == "raise":
-		var min_raise = bet_record[-1] - bet_record[-2] + bet_record[-1] - player.player_script.current_bet
+		var min_raise
+		if bet_record.size() == 1:
+			min_raise = bet_record[-1] +  bet_record[-1] - player.player_script.current_bet
+		else:
+			min_raise = bet_record[-1] - bet_record[-2] + bet_record[-1] - player.player_script.current_bet
 		var max_raise = player.chips
 		var raise_amount
 		if player.player_script.chips < min_raise:
@@ -424,6 +430,10 @@ func distribute_pots(active_players):
 		if contributors.size() > 0:
 			var eligible_players = active_players.filter(func(player): return player.player_script.player_name in contributors)
 
+			# チェック: eligible_playersが空の場合、スキップ
+			if eligible_players.size() == 0:
+				continue
+
 			# 最も強いプレイヤーを取得
 			var strongest_hand = eligible_players[0].player_script.hand_rank
 			var winners = eligible_players.filter(func(player): return player.player_script.hand_rank == strongest_hand)
@@ -441,7 +451,19 @@ func distribute_pots(active_players):
 				i += 0.3
 
 # ラウンドの終了後に必要な情報をリセットする
-func reset_round(seat_assignments: Dictionary):
+func reset_round(seat_assignments: Dictionary, buy_in: int):
+
+	# 0. 各Node（deck、chip）のremove
+	for child in get_children():
+		# 子ノードに接続されているシグナルを解除
+		for signal_name in child.get_signal_list():
+			if child.is_connected(signal_name["name"], Callable(self, "_signal_handler")):
+				child.disconnect(signal_name["name"], Callable(self, "_signal_handler"))
+
+		# 子ノードを削除
+		remove_child(child)
+		child.queue_free()
+
 	# 1. 各プレイヤーのカレントベットと手札をリセット
 	var i = 0
 	for seat in seat_assignments.keys():
@@ -458,6 +480,9 @@ func reset_round(seat_assignments: Dictionary):
 			player.player_script.hand_category = null
 			player.player_script.hand_rank = null
 			i += 0.3
+			# a. いったんここでchipsが0なら100に戻すように設定
+			if player.player_script.chips == 0:
+				player.player_script.chips = buy_in
 	# 2. コミュニティカード、バーンカードのリセット
 	community_cards = []
 	burn_cards = []
@@ -473,6 +498,7 @@ func reset_round(seat_assignments: Dictionary):
 
 	# 5. デッキのリセット
 	deck = DeckBackend.new()
+	add_child(deck)
 
 	# n. その他の必要な情報をリセット（必要に応じて追加）
 

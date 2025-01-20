@@ -58,6 +58,7 @@ func _ready():
 	# ゲームプロセスのインスタンスを作成する
 
 	game_process = GameProcessBackend.new(bet_size, buy_in, dealer_name, selected_cpus, seeing)
+	game_process.name = "GameProcessBackend"
 	add_child(game_process)
 
 func _process(delta):

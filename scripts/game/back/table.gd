@@ -74,7 +74,7 @@ func seat_player():
 
 func seat_dealer():
 	seat_assignments["Dealer"] = dealer
-
+	dealer.name = dealer.participant_name
 	add_child(dealer)
 	dealer.dealer_script.wait_to(0.5)
 	dealer.dealer_script.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
@@ -97,7 +97,7 @@ func seat_cpus():
 		if available_seats.size() > 0:
 			var random_seat = available_seats.pop_front()  # シャッフル済みリストから1つ取り出す
 			seat_assignments[random_seat] = cpu
-
+			cpu.name = cpu.participant_name
 			add_child(cpu)
 			cpu.player_script.wait_wait_to(wait, 0.5)
 			cpu.player_script.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))

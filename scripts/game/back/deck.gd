@@ -16,6 +16,7 @@ func generate_deck():
 			# Cardシーンをインスタンス化してプロパティを設定
 			var card_instance = CardBackend.new(rank, suit)
 			cards.append(card_instance)  # インスタンス化したカードをデッキに追加
+			card_instance.name = card_instance.to_str()
 			add_child(card_instance)
 
 	shuffle()
