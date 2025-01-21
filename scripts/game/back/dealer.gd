@@ -170,7 +170,7 @@ func distribute_single_card(seats, start_position, seat_assignments, base_delay,
 func set_action_list(player, current_max_bet) -> Array:
 	var action_list = ["fold"]
 
-	if bet_record.size() >= 1:
+	if bet_record.size() >= 2:
 		if player.player_script.chips <= current_max_bet - player.player_script.current_bet:
 			action_list.append("all-in")
 		else:
@@ -213,9 +213,7 @@ func selected_action(action, player, current_max_bet, bb_value):
 		bet_record.append(player.player_script.current_bet)
 	elif action == "raise":
 		var min_raise
-		if bet_record.size() == 1:
-			min_raise = bet_record[-1] +  bet_record[-1] - player.player_script.current_bet
-		else:
+		if bet_record.size() >= 2:
 			min_raise = bet_record[-1] - bet_record[-2] + bet_record[-1] - player.player_script.current_bet
 		var max_raise = player.chips
 		var raise_amount
@@ -246,18 +244,17 @@ func bet_round(seats, start_index: int, seat_assignments: Dictionary, bb_value: 
 	var player = seat_assignments[current_seat]
 
 	if player == null:
-		return false # 空席はスキップ
+		return "none_player" # 空席はスキップ
 
 	# フォールドまたはオールインしているプレイヤーはスキップ
-	if player.player_script.is_folded or player.player_script.is_all_in:
-		return false
+	if player.player_script.is_folded:
+		return "fold"
+
+	if player.player_script.is_all_in:
+		return "all-in"
 
 	# 現在の最大掛け金を取得
-	var current_max_bet = 0
-	for seat in seats:
-		var p = seat_assignments[seat]
-		if p != null:
-			current_max_bet = max(current_max_bet, p.player_script.current_bet)
+	var current_max_bet = bet_record[-1]
 
 	var action_list = set_action_list(player, current_max_bet)
 
@@ -282,11 +279,10 @@ func bet_round(seats, start_index: int, seat_assignments: Dictionary, bb_value: 
 					emit_signal("n_active_players_plus")
 				other_player.player_script.has_acted = false
 
-
 	player.player_script.wait_to(1.0)
 	emit_signal("action_finished")
 
-	return true
+	return action
 
 # プレイヤーの賭け金をポットとして集める
 func pot_collect(seat_assignments: Dictionary) -> int:
@@ -296,7 +292,8 @@ func pot_collect(seat_assignments: Dictionary) -> int:
 		var player = seat_assignments[seat]
 		if player != null:
 			if not player.player_script.is_folded and player.player_script.current_bet > 0:
-				active_bets.append(player.player_script.current_bet)
+				if not player.player_script.current_bet in active_bets:
+					active_bets.append(player.player_script.current_bet)
 	active_bets.sort()
 
 	if active_bets.size() == 0:
