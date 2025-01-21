@@ -90,20 +90,43 @@ func _on_moving_finished():
 	print("n_moving: " + str(n_moving))
 	if n_moving == 0:
 		sub_state = SubState.READY
-		if ((state == State.SETTING_DEALER_BUTTON and state_in_state != 3) or
-			(state == State.DEALING_CARD and state_in_state != 2) or
-			(state == State.PRE_FLOP_ACTION_END and (state_in_state == 0 or state_in_state == 2)) or
-			(state == State.FLOP_ACTION_END and (state_in_state == 0 or state_in_state == 2)) or
-			(state == State.TURN_ACTION_END and (state_in_state == 0 or state_in_state == 2)) or
-			(state == State.RIVER_ACTION_END and (state_in_state == 0 or state_in_state == 2)) or
-			(state == State.SHOW_DOWN and state_in_state == 0)):
+		if ((
+				state == State.SETTING_DEALER_BUTTON and state_in_state != 3
+			) or
+			(
+				state == State.DEALING_CARD and state_in_state != 2
+			) or
+			(
+				(
+					state == State.PRE_FLOP_ACTION_END or
+					state == State.FLOP_ACTION_END or
+					state == State.TURN_ACTION_END or
+					state == State.RIVER_ACTION_END
+				) and
+				(state_in_state == 0 or
+				state_in_state == 2)
+			) or
+			(
+				state == State.SHOW_DOWN and
+				state_in_state == 0
+			)):
 			state_in_state += 1
-		elif (state == State.PRE_FLOP_ACTION_END or state == State.FLOP_ACTION_END or state == State.TURN_ACTION_END or state == State.RIVER_ACTION_END) and state_in_state == 1:
+		elif (
+			state == State.PRE_FLOP_ACTION_END or
+			state == State.FLOP_ACTION_END or
+			state == State.TURN_ACTION_END or
+			state == State.RIVER_ACTION_END
+			) and state_in_state == 1:
 			if active_players.size() > 1:
 				state_in_state = 2
 			else:
 				state_in_state = 4
-		elif state == State.PRE_FLOP_ACTION or state == State.FLOP_ACTION or state == State.TURN_ACTION or state == State.RIVER_ACTION:
+		elif (
+			state == State.PRE_FLOP_ACTION or
+			state == State.FLOP_ACTION or
+			state == State.TURN_ACTION or
+			state == State.RIVER_ACTION
+			):
 			if n_active_players == 0:
 				next_state()
 		else:
@@ -161,12 +184,17 @@ func bet_state():
 	if action != "none_player":
 		print("action: " + str(action))
 
-	if action == "none_player" or action == "fold":
+	if action == "none_player":
 		sub_state = SubState.READY
 		current_action += 1
 		return
 
-	if action == "all-in":
+	if action == "folded":
+		sub_state = SubState.READY
+		current_action += 1
+		return
+
+	if action == "all-ined":
 		sub_state = SubState.READY
 		current_action += 1
 		return
@@ -185,7 +213,7 @@ func bet_state():
 
 	if active_players_bet.size() >= 1 and active_players_acted:
 		table_backend.dealer.dealer_script.bet_record = [0]
-		sub_state = SubState.READY
+		# sub_state = SubState.READY
 		next_state()
 		return
 
@@ -196,7 +224,7 @@ func bet_state():
 
 	if all_in_players.size() == active_players.size() and active_players_acted:
 		table_backend.dealer.dealer_script.bet_record = [0]
-		sub_state = SubState.READY
+		# sub_state = SubState.READY
 		next_state()
 		return
 
@@ -251,10 +279,10 @@ func _process(delta):
 				sub_state = SubState.DEALER_BUTTON_MOVING
 				table_backend.dealer.dealer_script.burn_cards.clear()
 				_on_n_moving_plus()
-				table_backend.dealer.dealer_script.wait_to(0.5)
+				table_backend.dealer.dealer_script.wait_to(1.0)
 				initial_dealer.player_script.is_dealer = true
 				_on_n_moving_plus()
-				initial_dealer.player_script.wait_to(0.5)
+				initial_dealer.player_script.wait_to(1.0)
 		State.DEALER_SET:
 			print("State.DEALER_SET")
 			next_state()
@@ -266,11 +294,11 @@ func _process(delta):
 			sb_player.player_script.bet(sb)
 			table_backend.dealer.dealer_script.bet_record.append(sb)
 			_on_n_moving_plus()
-			sb_player.player_script.wait_to(0.4)
+			sb_player.player_script.wait_to(1.0)
 			bb_player.player_script.bet(bb)
 			table_backend.dealer.dealer_script.bet_record.append(bb)
 			_on_n_moving_plus()
-			bb_player.player_script.wait_to(0.4)
+			bb_player.player_script.wait_to(1.0)
 		State.SB_BB_PAID:
 			print("State.SB_BB_PAID")
 			next_state()
@@ -320,7 +348,7 @@ func _process(delta):
 					if player != null:
 						if not player.player_script.is_folded:
 							active_players.append(player)
-				table_backend.dealer.dealer_script.wait_to(0.5)
+				table_backend.dealer.dealer_script.wait_to(1.0)
 				_on_n_moving_plus()
 			elif state_in_state == 2:
 				print("State_in_State.burn_card")
@@ -339,6 +367,7 @@ func _process(delta):
 					if player != null and not player.player_script.is_folded and not player.player_script.is_all_in:
 						n_active_players += 1
 						player.player_script.has_acted = false
+						player.player_script.last_action.clear()
 
 			elif state_in_state == 4:
 				# ステートを一気にポット分配まで飛ばす
@@ -369,7 +398,7 @@ func _process(delta):
 					if player != null:
 						if not player.player_script.is_folded:
 							active_players.append(player)
-				table_backend.dealer.dealer_script.wait_to(0.5)
+				table_backend.dealer.dealer_script.wait_to(1.0)
 				_on_n_moving_plus()
 			elif state_in_state == 2:
 				print("State_in_State.burn_card")
@@ -387,6 +416,8 @@ func _process(delta):
 					var player = table_backend.seat_assignments[seat]
 					if player != null and player.player_script != null and not player.player_script.is_folded and not player.player_script.is_all_in:
 						n_active_players += 1
+						player.player_script.has_acted = false
+						player.player_script.last_action.clear()
 
 			elif state_in_state == 4:
 				# ステートを一気にポット分配まで飛ばす
@@ -417,7 +448,7 @@ func _process(delta):
 					if player != null:
 						if not player.player_script.is_folded:
 							active_players.append(player)
-				table_backend.dealer.dealer_script.wait_to(0.5)
+				table_backend.dealer.dealer_script.wait_to(1.0)
 				_on_n_moving_plus()
 			elif state_in_state == 2:
 				print("State_in_State.burn_card")
@@ -435,6 +466,8 @@ func _process(delta):
 					var player = table_backend.seat_assignments[seat]
 					if player != null and player.player_script != null and not player.player_script.is_folded and not player.player_script.is_all_in:
 						n_active_players += 1
+						player.player_script.has_acted = false
+						player.player_script.last_action.clear()
 
 			elif state_in_state == 4:
 				# ステートを一気にポット分配まで飛ばす
@@ -465,7 +498,7 @@ func _process(delta):
 					if player != null:
 						if not player.player_script.is_folded:
 							active_players.append(player)
-				table_backend.dealer.dealer_script.wait_to(0.5)
+				table_backend.dealer.dealer_script.wait_to(1.0)
 				_on_n_moving_plus()
 			elif state_in_state == 2:
 				print("State_in_State.burn_card")
@@ -505,15 +538,16 @@ func _process(delta):
 						if not player.player_script.is_folded:
 							for card in player.player_script.hand:
 								card.connect("waiting_finished", Callable(self, "_on_moving_finished"))
-								card.wait_to(0.5)
+								card.wait_to(1.0)
 							_on_n_moving_plus()
 							_on_n_moving_plus()
 			elif state_in_state == 1:
 				print("State_inState:evaluate_hand")
 				# 手の強さ判定
+				sub_state = SubState.CARD_OPENING
 				active_players = table_backend.dealer.dealer_script.evaluate_hand(table_backend.seat_assignments)
-				state_in_state = 0
-				next_state()
+				table_backend.dealer.dealer_script.wait_to(1.0)
+				_on_n_moving_plus()
 		State.SHOW_DOWN_END:
 			print("State.SHOW_DOWN_END")
 			next_state()

@@ -62,7 +62,7 @@ func burn_card():
 	var card = deck.draw_card()
 	card.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
 	emit_signal("n_moving_plus")
-	card.wait_to(0.5)
+	card.wait_to(1.0)
 	burn_cards.append(card)
 
 # プレイヤーにカードを配る
@@ -79,7 +79,7 @@ func deal_card(seat_assignments, start_position := 0):
 		if current_player:
 			var card = deck.draw_card()
 			current_player.player_script.hand.append(card)
-			card.wait_wait_to(i * 0.3, 0.5)
+			card.wait_wait_to(i * 0.3, 1.0)
 			card.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
 			emit_signal("n_moving_plus")
 
@@ -104,7 +104,7 @@ func set_initial_button(seat_assignments):
 		var player = seat_assignments[seat]
 		if player:
 			player.player_script.hand.clear()
-			player.player_script.wait_wait_to(0.1, 0.5)
+			player.player_script.wait_wait_to(0.1, 1.0)
 			emit_signal("n_moving_plus")
 
 	return dealer_player
@@ -143,7 +143,7 @@ func get_dealer_button_index(seat_assignments: Dictionary, count: int = 0) -> St
 func deal_hole_cards(seat_assignments: Dictionary):
 
 	var delay_base = 0.2  # 各プレイヤーへのディレイ間隔
-	var card_delay = 0.5  # カード配布アニメーションの時間
+	var card_delay = 1.0  # カード配布アニメーションの時間
 	var total_delay = 0.0
 
 	# 座席リストを取得してソート
@@ -167,8 +167,11 @@ func distribute_single_card(seats, start_position, seat_assignments, base_delay,
 	return delay
 
 # アクションリストを作成
-func set_action_list(player, current_max_bet) -> Array:
-	var action_list = ["fold"]
+func set_action_list(player, current_max_bet, seats, seat_assignments) -> Array:
+
+	var action_list = []
+	if bet_record[-1] > player.player_script.current_bet:
+		action_list.append("fold")
 
 	if bet_record.size() >= 2:
 		if player.player_script.chips <= current_max_bet - player.player_script.current_bet:
@@ -179,9 +182,16 @@ func set_action_list(player, current_max_bet) -> Array:
 			action_list.append("raise")
 	else:
 		action_list.append("check")
-		if current_max_bet < player.player_script.current_bet + player.player_script.chips:
-			action_list.append("bet")
-
+		# 再度アクティブなプレイヤーを更新
+		var active_players = []
+		for seat in seats:
+			var p = seat_assignments[seat]
+			if p != null and not p.player_script.is_folded and not p.player_script.is_all_in:
+				active_players.append(p)
+		if active_players.size() > 1:
+			if current_max_bet < player.player_script.current_bet + player.player_script.chips:
+				action_list.append("bet")
+	print(action_list)
 	return action_list
 
 # 選択されたアクションによってプレイヤーの状態を更新
@@ -248,15 +258,15 @@ func bet_round(seats, start_index: int, seat_assignments: Dictionary, bb_value: 
 
 	# フォールドまたはオールインしているプレイヤーはスキップ
 	if player.player_script.is_folded:
-		return "fold"
+		return "folded"
 
 	if player.player_script.is_all_in:
-		return "all-in"
+		return "all-ined"
 
 	# 現在の最大掛け金を取得
 	var current_max_bet = bet_record[-1]
 
-	var action_list = set_action_list(player, current_max_bet)
+	var action_list = set_action_list(player, current_max_bet, seats, seat_assignments)
 
 	var action = player.player_script.select_action(action_list)
 
@@ -325,7 +335,7 @@ func pot_collect(seat_assignments: Dictionary) -> int:
 					var chip = ChipBackend.new()
 					chip.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
 					add_child(chip)
-					chip.wait_wait_to(i * 0.3, 0.5)
+					chip.wait_wait_to(i * 0.3, 1.0)
 					emit_signal("n_moving_plus")
 					i += 1
 
@@ -344,7 +354,7 @@ func pot_collect(seat_assignments: Dictionary) -> int:
 				var chip = ChipBackend.new()
 				chip.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
 				add_child(chip)
-				chip.wait_wait_to(i * 0.3, 0.5)
+				chip.wait_wait_to(i * 0.3, 1.0)
 				emit_signal("n_moving_plus")
 				i += 1
 				player.player_script.current_bet = 0
@@ -366,7 +376,7 @@ func reveal_community_cards(num_cards: Array) -> Array:
 	for place in num_cards:
 		var card = deck.draw_card()  # デッキからカードを1枚引く
 		community_cards.append(card)
-		card.wait_to(0.5)
+		card.wait_to(1.0)
 		card.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
 		emit_signal("n_moving_plus")
 
@@ -415,7 +425,7 @@ func distribute_pots(active_players):
 			total_chips += pot.total
 		winner.player_script.chips += total_chips
 		var chip = ChipBackend.new()
-		chip.wait_to(0.5)
+		chip.wait_to(1.0)
 		chip.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
 		add_child(chip)
 		emit_signal("n_moving_plus")
@@ -441,7 +451,7 @@ func distribute_pots(active_players):
 			for winner in winners:
 				winner.player_script.chips += chips_per_winner
 				var chip = ChipBackend.new()
-				chip.wait_wait_to(i, 0.5)
+				chip.wait_wait_to(i, 1.0)
 				chip.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
 				add_child(chip)
 				emit_signal("n_moving_plus")
@@ -467,7 +477,7 @@ func reset_round(seat_assignments: Dictionary, buy_in: int):
 		var player = seat_assignments[seat]
 		if player != null:
 			player.player_script.hand = []
-			player.player_script.wait_wait_to(i, 0.5)
+			player.player_script.wait_wait_to(i, 1.0)
 			emit_signal("n_moving_plus")
 			player.player_script.current_bet = 0  # 現在のベット額
 			player.player_script.last_action = []  # 最後のアクションを保存する属性
@@ -483,7 +493,7 @@ func reset_round(seat_assignments: Dictionary, buy_in: int):
 	# 2. コミュニティカード、バーンカードのリセット
 	community_cards = []
 	burn_cards = []
-	wait_to(0.5)
+	wait_to(1.0)
 	emit_signal("n_moving_plus")
 
 	# 3. ポットのリセット
@@ -528,7 +538,7 @@ func move_dealer_button(seat_assignments: Dictionary):
 	if seat_assignments[next_dealer_seat] != null:
 		seat_assignments[next_dealer_seat].player_script.is_dealer = true
 
-	wait_to(0.5)
+	wait_to(1.0)
 	emit_signal("n_moving_plus")
 
 func wait_wait_to(wait : float, dur : float):

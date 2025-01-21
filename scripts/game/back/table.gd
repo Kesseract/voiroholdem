@@ -76,7 +76,7 @@ func seat_dealer():
 	seat_assignments["Dealer"] = dealer
 	dealer.name = dealer.participant_name
 	add_child(dealer)
-	dealer.dealer_script.wait_to(0.5)
+	dealer.dealer_script.wait_to(1.0)
 	dealer.dealer_script.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
 	dealer.dealer_script.connect("n_active_players_plus", Callable(game_process, "_on_n_active_players_plus"))
 	dealer.dealer_script.connect("action_finished", Callable(game_process, "_on_action_finished"))
@@ -99,7 +99,7 @@ func seat_cpus():
 			seat_assignments[random_seat] = cpu
 			cpu.name = cpu.participant_name
 			add_child(cpu)
-			cpu.player_script.wait_wait_to(wait, 0.5)
+			cpu.player_script.wait_wait_to(wait, 1.0)
 			cpu.player_script.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
 			wait += 0.3
 
