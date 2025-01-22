@@ -90,13 +90,24 @@ func set_initial_button(seat_assignments):
 	var seats = seat_assignments.keys()
 	var dealer_player = seat_assignments[seats[0]]
 
+	# ランク定義 (2〜10, J, Q, K, A)
+	const RANKS = {
+		"2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9, "10": 10,
+		"J": 11, "Q": 12, "K": 13, "A": 14
+	}
+
+	const SUIT = {
+		"♣︎": 1, "♦": 2, "♥︎": 3, "♠︎": 4
+	}
+
 	# 最高のカードを持つプレイヤーを探す
 	for seat in seats:
 		var current_player = seat_assignments[seat]
 		if current_player:
-			if dealer_player == null or	(current_player.player_script.hand[0].rank > dealer_player.player_script.hand[0].rank or
-				(current_player.player_script.hand[0].rank == dealer_player.player_script.hand[0].rank and
-				current_player.player_script.hand[0].suit > dealer_player.player_script.hand[0].suit)):
+			if (dealer_player == null or
+				RANKS[current_player.player_script.hand[0].rank] > RANKS[dealer_player.player_script.hand[0].rank] or
+				(RANKS[current_player.player_script.hand[0].rank] == RANKS[dealer_player.player_script.hand[0].rank] and
+				SUIT[current_player.player_script.hand[0].suit] > SUIT[dealer_player.player_script.hand[0].suit])):
 				dealer_player = current_player
 
 	# 全プレイヤーの手札をクリア
