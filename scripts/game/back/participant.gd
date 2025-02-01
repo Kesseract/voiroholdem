@@ -1,6 +1,8 @@
 extends Node
 class_name ParticipantBackend
 
+var front
+
 var participant_name: String = "Anonymous"
 var chips: int = 0
 var is_cpu: bool = false
@@ -10,7 +12,6 @@ var player_script
 var dealer_script
 
 var game_process
-var front
 
 # 現在の状態を文字列として取得する
 func to_str() -> String:
@@ -28,11 +29,16 @@ func _init(_game_process, _participant_name, _chips, _is_cpu, _role, _seeing):
 	chips = _chips
 	is_cpu = _is_cpu
 	role = _role
+	seeing = _seeing
 	if role != "dealer":
 		player_script = PlayerBackend.new(participant_name, chips, is_cpu)
 		player_script.name = "PlayerBackend"
 		add_child(player_script)
 	if role != "player":
-		dealer_script = DealerBackend.new(game_process)
+		dealer_script = DealerBackend.new(game_process, seeing)
 		dealer_script.name = "DealerBackend"
 		add_child(dealer_script)
+
+	if seeing:
+		var front_instance = load("res://scenes/gamecomponents/Participant.tscn")
+		front = front_instance.instantiate()

@@ -1,15 +1,18 @@
 extends Node
 class_name TableBackend
 
+var front
+
 var sb
 var bb
 var buy_in
 var dealer_name
 var selected_cpus
+var table_place
+var animation_place
 var seeing
 
 var game_process
-var front
 
 var player
 var cpu_players = []
@@ -34,18 +37,21 @@ func to_str() -> String:
 	result += "=======================\n"
 	return result
 
-func _init(_game_process, _bet_size, _buy_in, _dealer_name, _selected_cpus, _seeing):
+func _init(_game_process, _bet_size, _buy_in, _dealer_name, _selected_cpus, _table_place, _animation_place, _seeing):
 	game_process = _game_process
 	sb = _bet_size["sb"]
 	bb = _bet_size["bb"]
 	buy_in = _buy_in
 	dealer_name = _dealer_name
 	selected_cpus = _selected_cpus
+	table_place = _table_place
+	animation_place = _animation_place
 	seeing = _seeing
 
 	if not seeing:
 		var front_instance = load("res://scenes/gamecomponents/Table.tscn")
 		front = front_instance.instantiate()
+		table_place["Instance"].add_child(front)
 
 	# 初期化処理
 	# 操作プレイヤーを作る
@@ -76,12 +82,23 @@ func seat_dealer():
 	seat_assignments["Dealer"] = dealer
 	dealer.name = dealer.participant_name
 	add_child(dealer)
-	dealer.dealer_script.wait_to(1.0)
+	if seeing:
+		# ディーラーの必要な情報をいろいろと更新する
+		dealer.front.set_parameter(dealer, "Dealer")
+		var dst = dealer.front.get_position()
+		dealer.front.set_position(dealer.front.get_position() + Vector2(0, -75))
+		animation_place["Dealer"]["Participant"].add_child(dealer.front)
+		dealer.front.move_to(dst, 1.0)
+		dealer.front.connect("moving_finished", Callable(game_process, "_on_moving_finished"))
+	else:
+		dealer.dealer_script.wait_to(1.0)
 	dealer.dealer_script.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
 	dealer.dealer_script.connect("n_active_players_plus", Callable(game_process, "_on_n_active_players_plus"))
 	dealer.dealer_script.connect("action_finished", Callable(game_process, "_on_action_finished"))
+	dealer.dealer_script.animation_place = animation_place
+	dealer.dealer_script.table_place = table_place
 
-	emit_signal("n_moving_plus")
+	n_moving_plus.emit()
 
 
 func seat_cpus():
@@ -99,8 +116,18 @@ func seat_cpus():
 			seat_assignments[random_seat] = cpu
 			cpu.name = cpu.participant_name
 			add_child(cpu)
-			cpu.player_script.wait_wait_to(wait, 1.0)
-			cpu.player_script.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
+			if seeing:
+				cpu.front.set_parameter(cpu, random_seat)
+				var dst = cpu.front.get_position()
+				cpu.front.set_position(cpu.front.get_position() + Vector2(0, -75))
+				animation_place[random_seat]["Participant"].add_child(cpu.front)
+				# cpu.front.add_child_node = animation_place[random_seat]["Participant"]
+				cpu.front.wait_move_to(wait, dst, 1.0)
+				cpu.front.connect("moving_finished", Callable(game_process, "_on_moving_finished"))
+				# 初期チップの表示
+			else:
+				cpu.player_script.wait_wait_to(wait, 1.0)
+				cpu.player_script.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
 			wait += 0.3
 
-			emit_signal("n_moving_plus")
+			n_moving_plus.emit()

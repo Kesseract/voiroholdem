@@ -1,10 +1,7 @@
 extends Node
-class_name CardBackend
+class_name DealerButtonBackend
 
 var front
-
-var rank
-var suit
 
 var seeing
 
@@ -13,38 +10,13 @@ var moving = false
 var move_dur = 0.0				# 移動所要時間（単位：秒）
 var move_elapsed = 0.0			# 移動経過時間（単位：秒）
 
-signal waiting_finished
-
-func _init(_rank, _suit, _seeing):
-	rank = _rank
-	suit = suit_to_symbol(_suit)
+func _init(_seeing):
 	seeing = _seeing
 
 	if seeing:
-		var front_instance = load("res://scenes/gamecomponents/Card.tscn")
+		var front_instance = load("res://scenes/gamecomponents/DealerButton.tscn")
 		front = front_instance.instantiate()
 
-# スートをシンボルに変換する
-func suit_to_symbol(suit_str) -> String:
-	match suit_str:
-		"Spades":
-			return "♠︎"
-		"Hearts":
-			return "♥︎"
-		"Clubs":
-			return "♣︎"
-		"Diamonds":
-			return "♦︎"
-		_:
-			return "?"  # 不明なスートの場合
-
-func to_str():
-	return str(rank) + str(suit)
-
-func wait_wait_to(wait : float, dur : float):
-	waiting_time = wait
-	#wait_elapsed = 0.0
-	wait_to(dur)
 func wait_to(dur : float):
 	move_dur = dur
 	move_elapsed = 0.0
@@ -59,4 +31,4 @@ func _process(delta):
 		move_elapsed = min(move_elapsed, move_dur)	# 行き過ぎ防止
 		if move_elapsed == move_dur:		# 移動終了の場合
 			moving = false
-			waiting_finished.emit()
+			emit_signal("waiting_finished")	# 移動終了シグナル発行

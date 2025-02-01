@@ -12,4 +12,4 @@ func setup(parent_node):
 
 func _on_pressed():
 	if seat_node:
-		emit_signal("seat_clicked", seat_node)  # 席の親ノードを通知
+		seat_clicked.emit(seat_node)  # 席の親ノードを通知

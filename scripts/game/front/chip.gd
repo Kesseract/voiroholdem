@@ -1,6 +1,8 @@
 extends Node2D
 
 signal moving_finished
+signal moving_finished_add_chip
+signal moving_finished_queue_free
 
 # 現在のチップ値を保持する変数
 var current_chip_value: int = 0
@@ -10,6 +12,8 @@ var move_dur = 0.0				# 移動所要時間（単位：秒）
 var move_elapsed = 0.0			# 移動経過時間（単位：秒）
 var src_pos = Vector2(0, 0)		# 移動元位置
 var dst_pos = Vector2(0, 0)		# 移動先位置
+var queue_free_flg = false
+var add_chip = false
 
 func _init():
 	pass
@@ -57,4 +61,9 @@ func _process(delta):
 		set_position(src_pos * (1.0 - r) + dst_pos * r)		# 位置更新
 		if move_elapsed == move_dur:		# 移動終了の場合
 			moving = false
-			emit_signal("moving_finished")	# 移動終了シグナル発行
+			if add_chip:
+				moving_finished_add_chip.emit()
+			elif not add_chip and queue_free_flg:
+				moving_finished_queue_free.emit()
+			else:
+				moving_finished.emit()

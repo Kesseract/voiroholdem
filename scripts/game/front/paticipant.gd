@@ -7,6 +7,9 @@ var sprite
 var name_action
 var chips
 
+@onready var add_child_node = null
+var add_child_flg = false
+
 var waiting_time = 0.0			# ウェイト時間（単位：秒）
 var moving = false
 var move_dur = 0.0				# 移動所要時間（単位：秒）
@@ -41,10 +44,6 @@ func _init():
 func _ready():
 	pass
 
-# ベット額と残りチップを画面に反映
-func _on_bet_updated(remaining_chips: int):
-	set_chips(remaining_chips)  # チップ残高のUIを更新
-
 func set_sprite(value):
 	sprite.texture = value
 
@@ -54,14 +53,34 @@ func set_name_action(value):
 func set_chips(value):
 	chips.text = str(value)
 
-func set_backend(_backend, _seat):
+func set_parameter(_backend, _seat):
 	backend = _backend
 
 	# 役割ごとのノードマッピング
+	var node_place = {
+		"Player": {
+			"Instance": $Player,
+			"Sprite": $Player/VBoxContainer/Frame/Sprite2D,
+			"NameAction": $Player/VBoxContainer/NameAction,
+			"Chips": $Player/VBoxContainer/Chips,
+		},
+		"Dealer": {
+			"Instance": $Dealer,
+			"Sprite": $Dealer/VBoxContainer/Frame/Sprite2D,
+			"NameAction": $Dealer/VBoxContainer/NameAction,
+			"Chips": null,
+		},
+		"PlayingDealer": {
+			"Instance": $PlayingDealer,
+			"Sprite": $PlayingDealer/VBoxContainer/Frame/Sprite2D,
+			"NameAction": $PlayingDealer/VBoxContainer/NameAction,
+			"Chips": $PlayingDealer/VBoxContainer/Chips,
+		}
+	}
 	var role_map = {
-		"player": node["Player"],
-		"dealer": node["Dealer"],
-		"playing_dealer": node["PlayingDealer"]
+		"player": node_place["Player"],
+		"dealer": node_place["Dealer"],
+		"playing_dealer": node_place["PlayingDealer"]
 	}
 
 	# 役割に基づいてノードを設定
@@ -95,6 +114,7 @@ func wait_move_to(wait : float, dst : Vector2, dur : float):
 	waiting_time = wait
 	#wait_elapsed = 0.0
 	move_to(dst, dur)
+
 func move_to(dst : Vector2, dur : float):
 	src_pos = get_position()
 	dst_pos = dst
@@ -104,6 +124,9 @@ func move_to(dst : Vector2, dur : float):
 	pass
 
 func _process(delta):
+	if waiting_time > 0.0:
+		waiting_time -= delta
+		return
 	if moving:		# 移動処理中
 		move_elapsed += delta	# 経過時間
 		move_elapsed = min(move_elapsed, move_dur)	# 行き過ぎ防止
@@ -111,4 +134,4 @@ func _process(delta):
 		set_position(src_pos * (1.0 - r) + dst_pos * r)		# 位置更新
 		if move_elapsed == move_dur:		# 移動終了の場合
 			moving = false
-			emit_signal("moving_finished")	# 移動終了シグナル発行
+			moving_finished.emit()

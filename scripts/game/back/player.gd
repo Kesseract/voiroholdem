@@ -66,6 +66,12 @@ func bet(amount: int) -> int:
 
 # フォールドする
 func fold():
+	hand[0].front.queue_free_flg = true
+	var dst1 = hand[0].front.get_position() + Vector2(0, -50)
+	hand[0].front.wait_move_to(0.1, dst1, 0.5)
+	hand[1].front.queue_free_flg = true
+	var dst2 = hand[1].front.get_position() + Vector2(0, -50)
+	hand[1].front.wait_move_to(0.1, dst2, 0.5)
 	hand.clear()
 	is_folded = true
 
@@ -112,14 +118,15 @@ func select_bet_amount(min_amount, max_amount):
 	if is_cpu:
 		return _cpu_select_bet_amount(min_amount, max_amount)
 	else:
-		return _player_select_bet_amount(min_amount, max_amount)
+		return _player_select_bet_amount()
 
 # CPUとしてベット額を選択
 func _cpu_select_bet_amount(min_amount: int, max_amount: int) -> int:
 	return randi() % (max_amount - min_amount + 1) + min_amount
 
 # プレイヤーとしてのベットまたはレイズの額を選択する
-func _player_select_bet_amount(min_amount: int, max_amount: int) -> int:
+# func _player_select_bet_amount(min_amount: int, max_amount: int) -> int:
+func _player_select_bet_amount() -> int:
 	return int(selected_bet_amount)  # スケーリング結果を整数に変換して返す
 
 func wait_wait_to(wait : float, dur : float):
@@ -141,4 +148,4 @@ func _process(delta):
 		move_elapsed = min(move_elapsed, move_dur)	# 行き過ぎ防止
 		if move_elapsed == move_dur:		# 移動終了の場合
 			moving = false
-			emit_signal("waiting_finished")	# 移動終了シグナル発行
+			waiting_finished.emit()

@@ -1,9 +1,12 @@
 extends Node
 class_name DeckBackend
 
+var seeing
+
 var cards: Array = []
 
-func _init():
+func _init(_seeing):
+	seeing = _seeing
 	generate_deck()
 
 func generate_deck():
@@ -14,7 +17,7 @@ func generate_deck():
 	for suit in suits:
 		for rank in ranks:
 			# Cardシーンをインスタンス化してプロパティを設定
-			var card_instance = CardBackend.new(rank, suit)
+			var card_instance = CardBackend.new(rank, suit, seeing)
 			cards.append(card_instance)  # インスタンス化したカードをデッキに追加
 			card_instance.name = card_instance.to_str()
 			add_child(card_instance)

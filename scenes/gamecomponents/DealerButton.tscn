@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://bjg1ii0mil2p5"]
 
 [ext_resource type="Texture2D" uid="uid://dlh3m4q41hmus" path="res://assets/textures/Game/dealer_button.png" id="1_7il12"]
-[ext_resource type="Script" path="res://scripts/game/front/deaker_button.gd" id="1_32fk0"]
+[ext_resource type="Script" path="res://scripts/game/front/dealer_button.gd" id="1_32fk0"]
 
 [node name="DealerButton" type="Node2D"]
 script = ExtResource("1_32fk0")

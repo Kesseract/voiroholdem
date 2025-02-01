@@ -3,6 +3,7 @@ extends Node2D
 signal opening_finished
 signal closing_finished
 signal moving_finished
+signal moving_finished_queue_free
 
 var backend
 var front
@@ -10,14 +11,15 @@ var rank
 var suit
 var back
 
-var waiting_time
-var moving
-var move_elapsed
-var move_dur
-var src_pos
-var dst_pos
-var state
-var theta
+var waiting_time = 0.0			# ウェイト時間（単位：秒）
+var moving = false
+var move_dur = 0.0				# 移動所要時間（単位：秒）
+var move_elapsed = 0.0			# 移動経過時間（単位：秒）
+var src_pos = Vector2(0, 0)		# 移動元位置
+var dst_pos = Vector2(0, 0)		# 移動先位置
+var state = STATE_NONE
+var theta = 0.0
+var queue_free_flg = false
 
 enum {		# state
 	STATE_NONE = 0,
@@ -111,7 +113,10 @@ func _process(delta):
 		set_position(src_pos * (1.0 - r) + dst_pos * r)		# 位置更新
 		if move_elapsed == move_dur:		# 移動終了の場合
 			moving = false
-			emit_signal("moving_finished")	# 移動終了シグナル発行
+			if queue_free_flg:
+				moving_finished_queue_free.emit()
+			else:
+				moving_finished.emit()
 	#if state != STATE_NONE:
 	#	print("state = ", state)
 	if state == OPENING_FH:
@@ -132,7 +137,7 @@ func _process(delta):
 		else:
 			state = STATE_NONE
 			$Front.set_scale(Vector2(1.0, 1.0))
-			emit_signal("opening_finished")
+			opening_finished.emit()
 	elif state == CLOSING_FH:
 		theta += delta * TH_SCALE * 1.5
 		if theta < PI/2:
@@ -151,5 +156,5 @@ func _process(delta):
 		else:
 			state = STATE_NONE
 			$Back.set_scale(Vector2(1.0, 1.0))
-			emit_signal("closing_finished")
+			closing_finished.emit()
 	pass

@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://pkbe323ce3bt"]
+[gd_scene load_steps=4 format=3 uid="uid://pkbe323ce3bt"]
 
 [ext_resource type="Script" path="res://scripts/testbackend.gd" id="1_74tbl"]
+[ext_resource type="PackedScene" uid="uid://ypm2mdfqwyw6" path="res://scenes/gamecomponents/Table.tscn" id="2_nw5rj"]
+[ext_resource type="PackedScene" uid="uid://gxgighlcbg74" path="res://scenes/gamecomponents/Card.tscn" id="3_pximy"]
 
 [node name="TestBackend" type="Control"]
 layout_mode = 3
@@ -161,3 +163,267 @@ alignment = 1
 
 [node name="Label" type="Label" parent="ScrollContainer/VBoxContainer/Seat/Dealer"]
 layout_mode = 2
+
+[node name="Table" type="Node2D" parent="."]
+
+[node name="Rect" type="Node2D" parent="Table"]
+
+[node name="Table" parent="Table/Rect" instance=ExtResource("2_nw5rj")]
+
+[node name="Seat" type="Node2D" parent="Table"]
+
+[node name="Seat1" type="Node2D" parent="Table/Seat"]
+position = Vector2(894, 120)
+
+[node name="Participant" type="Node2D" parent="Table/Seat/Seat1"]
+
+[node name="Hand1" type="Node2D" parent="Table/Seat/Seat1"]
+position = Vector2(-41, 104)
+scale = Vector2(0.6, 0.6)
+
+[node name="Hand2" type="Node2D" parent="Table/Seat/Seat1"]
+position = Vector2(-8, 104)
+scale = Vector2(0.6, 0.6)
+
+[node name="Bet" type="Node2D" parent="Table/Seat/Seat1"]
+position = Vector2(-86, 160)
+
+[node name="DealerButton" type="Node2D" parent="Table/Seat/Seat1"]
+position = Vector2(-22, 145)
+
+[node name="Seat2" type="Node2D" parent="Table/Seat"]
+position = Vector2(1051, 202)
+
+[node name="Participant" type="Node2D" parent="Table/Seat/Seat2"]
+
+[node name="Hand1" type="Node2D" parent="Table/Seat/Seat2"]
+position = Vector2(-81, 73)
+scale = Vector2(0.6, 0.6)
+
+[node name="Hand2" type="Node2D" parent="Table/Seat/Seat2"]
+position = Vector2(-48, 73)
+scale = Vector2(0.6, 0.6)
+
+[node name="Bet" type="Node2D" parent="Table/Seat/Seat2"]
+position = Vector2(-165, 103)
+
+[node name="DealerButton" type="Node2D" parent="Table/Seat/Seat2"]
+position = Vector2(-129, 97)
+
+[node name="Seat3" type="Node2D" parent="Table/Seat"]
+position = Vector2(1083, 456)
+
+[node name="Participant" type="Node2D" parent="Table/Seat/Seat3"]
+
+[node name="Hand1" type="Node2D" parent="Table/Seat/Seat3"]
+position = Vector2(-114, -34)
+scale = Vector2(0.6, 0.6)
+
+[node name="Hand2" type="Node2D" parent="Table/Seat/Seat3"]
+position = Vector2(-81, -34)
+scale = Vector2(0.6, 0.6)
+
+[node name="Bet" type="Node2D" parent="Table/Seat/Seat3"]
+position = Vector2(-196, -82)
+
+[node name="DealerButton" type="Node2D" parent="Table/Seat/Seat3"]
+position = Vector2(-150, -41)
+
+[node name="Seat4" type="Node2D" parent="Table/Seat"]
+position = Vector2(932, 591)
+
+[node name="Participant" type="Node2D" parent="Table/Seat/Seat4"]
+
+[node name="Hand1" type="Node2D" parent="Table/Seat/Seat4"]
+position = Vector2(-42, -114)
+scale = Vector2(0.6, 0.6)
+
+[node name="Hand2" type="Node2D" parent="Table/Seat/Seat4"]
+position = Vector2(-9, -114)
+scale = Vector2(0.6, 0.6)
+
+[node name="Bet" type="Node2D" parent="Table/Seat/Seat4"]
+position = Vector2(-108, -178)
+
+[node name="DealerButton" type="Node2D" parent="Table/Seat/Seat4"]
+position = Vector2(-54, -153)
+
+[node name="Seat5" type="Node2D" parent="Table/Seat"]
+position = Vector2(748, 591)
+
+[node name="Participant" type="Node2D" parent="Table/Seat/Seat5"]
+
+[node name="Hand1" type="Node2D" parent="Table/Seat/Seat5"]
+position = Vector2(-10, -114)
+scale = Vector2(0.6, 0.6)
+
+[node name="Hand2" type="Node2D" parent="Table/Seat/Seat5"]
+position = Vector2(23, -114)
+scale = Vector2(0.6, 0.6)
+
+[node name="Bet" type="Node2D" parent="Table/Seat/Seat5"]
+position = Vector2(-60, -170)
+
+[node name="DealerButton" type="Node2D" parent="Table/Seat/Seat5"]
+position = Vector2(-6, -153)
+
+[node name="Seat6" type="Node2D" parent="Table/Seat"]
+position = Vector2(556, 591)
+
+[node name="Participant" type="Node2D" parent="Table/Seat/Seat6"]
+
+[node name="Hand1" type="Node2D" parent="Table/Seat/Seat6"]
+position = Vector2(-42, -114)
+scale = Vector2(0.6, 0.6)
+
+[node name="Hand2" type="Node2D" parent="Table/Seat/Seat6"]
+position = Vector2(-9, -114)
+scale = Vector2(0.6, 0.6)
+
+[node name="Bet" type="Node2D" parent="Table/Seat/Seat6"]
+position = Vector2(50, -170)
+
+[node name="DealerButton" type="Node2D" parent="Table/Seat/Seat6"]
+position = Vector2(-14, -153)
+
+[node name="Seat7" type="Node2D" parent="Table/Seat"]
+position = Vector2(372, 591)
+
+[node name="Participant" type="Node2D" parent="Table/Seat/Seat7"]
+
+[node name="Hand1" type="Node2D" parent="Table/Seat/Seat7"]
+position = Vector2(-42, -114)
+scale = Vector2(0.6, 0.6)
+
+[node name="Hand2" type="Node2D" parent="Table/Seat/Seat7"]
+position = Vector2(-9, -114)
+scale = Vector2(0.6, 0.6)
+
+[node name="Bet" type="Node2D" parent="Table/Seat/Seat7"]
+position = Vector2(60, -178)
+
+[node name="DealerButton" type="Node2D" parent="Table/Seat/Seat7"]
+position = Vector2(2, -153)
+
+[node name="Seat8" type="Node2D" parent="Table/Seat"]
+position = Vector2(188, 456)
+
+[node name="Participant" type="Node2D" parent="Table/Seat/Seat8"]
+
+[node name="Hand1" type="Node2D" parent="Table/Seat/Seat8"]
+position = Vector2(78, -42)
+scale = Vector2(0.6, 0.6)
+
+[node name="Hand2" type="Node2D" parent="Table/Seat/Seat8"]
+position = Vector2(111, -42)
+scale = Vector2(0.6, 0.6)
+
+[node name="Bet" type="Node2D" parent="Table/Seat/Seat8"]
+position = Vector2(187, -96)
+
+[node name="DealerButton" type="Node2D" parent="Table/Seat/Seat8"]
+position = Vector2(146, -57)
+
+[node name="Seat9" type="Node2D" parent="Table/Seat"]
+position = Vector2(222, 202)
+
+[node name="Participant" type="Node2D" parent="Table/Seat/Seat9"]
+
+[node name="Hand1" type="Node2D" parent="Table/Seat/Seat9"]
+position = Vector2(62, 78)
+scale = Vector2(0.6, 0.6)
+
+[node name="Hand2" type="Node2D" parent="Table/Seat/Seat9"]
+position = Vector2(95, 78)
+scale = Vector2(0.6, 0.6)
+
+[node name="Bet" type="Node2D" parent="Table/Seat/Seat9"]
+position = Vector2(211, 96)
+
+[node name="DealerButton" type="Node2D" parent="Table/Seat/Seat9"]
+position = Vector2(149, 94)
+
+[node name="Seat10" type="Node2D" parent="Table/Seat"]
+position = Vector2(406, 120)
+
+[node name="Participant" type="Node2D" parent="Table/Seat/Seat10"]
+
+[node name="Hand1" type="Node2D" parent="Table/Seat/Seat10"]
+position = Vector2(2, 102)
+scale = Vector2(0.6, 0.6)
+
+[node name="Hand2" type="Node2D" parent="Table/Seat/Seat10"]
+position = Vector2(35, 102)
+scale = Vector2(0.6, 0.6)
+
+[node name="Bet" type="Node2D" parent="Table/Seat/Seat10"]
+position = Vector2(67, 144)
+
+[node name="DealerButton" type="Node2D" parent="Table/Seat/Seat10"]
+position = Vector2(5, 135)
+
+[node name="Dealer" type="Node2D" parent="Table/Seat"]
+position = Vector2(646, 160)
+
+[node name="Participant" type="Node2D" parent="Table/Seat/Dealer"]
+
+[node name="Hand1" type="Node2D" parent="Table/Seat/Dealer"]
+position = Vector2(66, 22)
+scale = Vector2(0.6, 0.6)
+
+[node name="Hand2" type="Node2D" parent="Table/Seat/Dealer"]
+position = Vector2(99, 22)
+scale = Vector2(0.6, 0.6)
+
+[node name="Chip" type="Node2D" parent="Table/Seat/Dealer"]
+position = Vector2(80, 73)
+
+[node name="Bet" type="Node2D" parent="Table/Seat/Dealer"]
+position = Vector2(75, 120)
+
+[node name="DealerButton" type="Node2D" parent="Table/Seat/Dealer"]
+position = Vector2(-67, 63)
+
+[node name="Flop1" type="Node2D" parent="Table"]
+position = Vector2(532, 358)
+
+[node name="Flop2" type="Node2D" parent="Table"]
+position = Vector2(586, 358)
+
+[node name="Flop3" type="Node2D" parent="Table"]
+position = Vector2(641, 358)
+
+[node name="Turn" type="Node2D" parent="Table"]
+position = Vector2(696, 358)
+
+[node name="River" type="Node2D" parent="Table"]
+position = Vector2(751, 358)
+
+[node name="Deck" type="Node2D" parent="Table"]
+position = Vector2(579, 168)
+scale = Vector2(0.6, 0.6)
+
+[node name="Card" parent="Table/Deck" instance=ExtResource("3_pximy")]
+
+[node name="Burn" type="Node2D" parent="Table"]
+position = Vector2(508, 222)
+scale = Vector2(0.6, 0.6)
+
+[node name="SetInitialDealer" type="Node2D" parent="Table/Burn"]
+
+[node name="PreFlop" type="Node2D" parent="Table/Burn"]
+position = Vector2(13.3334, 13.3333)
+
+[node name="Flop" type="Node2D" parent="Table/Burn"]
+position = Vector2(28.3334, 26.6666)
+
+[node name="Turn" type="Node2D" parent="Table/Burn"]
+position = Vector2(43.3334, 40)
+
+[node name="River" type="Node2D" parent="Table/Burn"]
+position = Vector2(58.3334, 53.3333)
+
+[node name="Pot" type="Node2D" parent="Table"]
+position = Vector2(640, 272)
+
+[node name="DealerButton" type="Node2D" parent="Table"]

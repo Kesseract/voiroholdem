@@ -52,6 +52,9 @@ var sb
 var buy_in
 var dealer_name
 var selected_cpus
+var table_place
+var animation_place
+var player_flg
 var seeing
 
 var table_backend
@@ -67,13 +70,16 @@ var current_action
 var n_active_players = 0
 var active_players = []
 
-func _init(_bet_size, _buy_in, _dealer_name, _selected_cpus, _seeing):
+func _init(_bet_size, _buy_in, _dealer_name, _selected_cpus, _table_place, _animation_place, _player_flg, _seeing):
 	bet_size = _bet_size
 	bb = bet_size["bb"]
 	sb = bet_size["sb"]
 	buy_in = _buy_in
 	dealer_name = _dealer_name
 	selected_cpus = _selected_cpus
+	table_place = _table_place
+	animation_place = _animation_place
+	player_flg = _player_flg
 	seeing = _seeing
 
 func _ready():
@@ -133,6 +139,17 @@ func _on_moving_finished():
 			state_in_state = 0
 			next_state()
 
+func _on_moving_finished_queue_free(node):
+	#print(node)
+	node.queue_free()		# オブジェクト消去
+	_on_moving_finished()
+
+func _on_moving_finished_add_chip(node, already):
+	#print(node)
+	already.set_bet_value(node.current_chip_value)
+	node.queue_free()		# オブジェクト消去
+	_on_moving_finished()
+
 func _on_action_finished():
 	n_moving += 1
 	n_active_players -= 1
@@ -144,14 +161,15 @@ func next_state():
 		return
 
 	if state == State.INIT:
-		if not seeing:
+		if player_flg:
 			state = State.SEATING_PLAYER
 		else:
 			state = State.SEATING_DEALER
 	elif state == State.MOVED_DEALER_BUTTON:
 		state = State.PAYING_SB_BB
 	else:
-		state += 1
+		var state_keys = State.keys()
+		state = State[state_keys[state + 1]]
 
 func bet_state():
 	sub_state = SubState.CHIP_BETTING
@@ -239,7 +257,7 @@ func _process(delta):
 	match state:
 		State.INIT:
 			print("State.INIT")
-			table_backend = TableBackend.new(self, bet_size, buy_in, dealer_name, selected_cpus, seeing)
+			table_backend = TableBackend.new(self, bet_size, buy_in, dealer_name, selected_cpus, table_place, animation_place, seeing)
 			table_backend.connect("n_moving_plus", Callable(self, "_on_n_moving_plus"))
 			table_backend.dealer.dealer_script.connect("n_moving_plus", Callable(self, "_on_n_moving_plus"))
 			table_backend.name = "TableBackend"
@@ -265,7 +283,7 @@ func _process(delta):
 			if state_in_state == 0:
 				print("State_in_State.burn_card")
 				sub_state = SubState.CARD_MOVING
-				table_backend.dealer.dealer_script.burn_card()
+				table_backend.dealer.dealer_script.burn_card("SetInitialDealer")
 			elif state_in_state == 1:
 				print("State_in_State.deal_card")
 				sub_state = SubState.CARD_MOVING
@@ -273,32 +291,72 @@ func _process(delta):
 			elif state_in_state == 2:
 				print("State_in_State.set_initial_button")
 				sub_state = SubState.CARD_MOVING
-				initial_dealer = table_backend.dealer.dealer_script.set_initial_button(table_backend.seat_assignments)
+				table_backend.dealer.dealer_script.set_initial_button(table_backend.seat_assignments)
 			elif state_in_state == 3:
 				print("State_in_State.set_dealer")
 				sub_state = SubState.DEALER_BUTTON_MOVING
-				table_backend.dealer.dealer_script.burn_cards.clear()
-				_on_n_moving_plus()
-				table_backend.dealer.dealer_script.wait_to(1.0)
-				initial_dealer.player_script.is_dealer = true
-				_on_n_moving_plus()
-				initial_dealer.player_script.wait_to(1.0)
+				table_backend.dealer.dealer_script.hand_clear(table_backend.seat_assignments)
 		State.DEALER_SET:
 			print("State.DEALER_SET")
+
+			# デッキのリセット
+			for child in table_backend.dealer.dealer_script.get_children():
+				# 子ノードに接続されているシグナルを解除
+				for signal_name in child.get_signal_list():
+					if child.is_connected(signal_name["name"], Callable(self, "_signal_handler")):
+						child.disconnect(signal_name["name"], Callable(self, "_signal_handler"))
+
+				# 子ノードを削除
+				remove_child(child)
+				child.queue_free()
+
+			table_backend.dealer.dealer_script.deck = DeckBackend.new(seeing)
+			table_backend.dealer.dealer_script.deck.name = "DeckBackend"
+			table_backend.dealer.dealer_script.add_child(table_backend.dealer.dealer_script.deck)
+
 			next_state()
 		State.PAYING_SB_BB:
 			print("State.PAYING_SB_BB")
 			sub_state = SubState.CHIP_BETTING
-			var sb_player = table_backend.seat_assignments[table_backend.dealer.dealer_script.get_dealer_button_index(table_backend.seat_assignments, 1)]
-			var bb_player = table_backend.seat_assignments[table_backend.dealer.dealer_script.get_dealer_button_index(table_backend.seat_assignments, 2)]
+			var sb_seat = table_backend.dealer.dealer_script.get_dealer_button_index(table_backend.seat_assignments, 1)
+			var sb_player = table_backend.seat_assignments[sb_seat]
 			sb_player.player_script.bet(sb)
+			if seeing:
+				sb_player.front.set_chips(sb_player.player_script.chips)
+				var chip_instance = load("res://scenes/gamecomponents/Chip.tscn")
+				var chip = chip_instance.instantiate()
+				chip.set_chip_sprite(false)
+				chip.set_bet_value(sb)
+				chip.connect("moving_finished", Callable(self, "_on_moving_finished"))
+				chip.connect("moving_finished_queue_free", Callable(self, "_on_moving_finished_queue_free").bind(chip))
+				chip.set_position(-1 * animation_place[sb_seat]["Bet"].get_position())
+				animation_place[sb_seat]["Bet"].add_child(chip)
+				chip.move_to(Vector2(0, 0), 1.0)
+			else:
+				sb_player.player_script.wait_to(1.0)
 			table_backend.dealer.dealer_script.bet_record.append(sb)
 			_on_n_moving_plus()
-			sb_player.player_script.wait_to(1.0)
+
+			var bb_seat = table_backend.dealer.dealer_script.get_dealer_button_index(table_backend.seat_assignments, 2)
+			var bb_player = table_backend.seat_assignments[bb_seat]
 			bb_player.player_script.bet(bb)
+			if seeing:
+				bb_player.front.set_chips(bb_player.player_script.chips)
+				var chip_instance = load("res://scenes/gamecomponents/Chip.tscn")
+				var chip = chip_instance.instantiate()
+
+				chip.set_chip_sprite(false)
+				chip.set_bet_value(bb)
+				chip.connect("moving_finished", Callable(self, "_on_moving_finished"))
+				chip.connect("moving_finished_queue_free", Callable(self, "_on_moving_finished_queue_free").bind(chip))
+				chip.set_position(-1 * animation_place[bb_seat]["Bet"].get_position())
+				animation_place[bb_seat]["Bet"].add_child(chip)
+				chip.move_to(Vector2(0, 0), 1.0)
+			else:
+				bb_player.player_script.wait_to(1.0)
 			table_backend.dealer.dealer_script.bet_record.append(bb)
 			_on_n_moving_plus()
-			bb_player.player_script.wait_to(1.0)
+
 		State.SB_BB_PAID:
 			print("State.SB_BB_PAID")
 			next_state()
@@ -307,13 +365,13 @@ func _process(delta):
 			sub_state = SubState.CARD_MOVING
 			if state_in_state == 0:
 				print("State_in_State.burn_card")
-				table_backend.dealer.dealer_script.burn_card()
+				table_backend.dealer.dealer_script.burn_card("PreFlop")
 			elif state_in_state == 1:
 				print("State_in_State.deal_card_one")
-				table_backend.dealer.dealer_script.deal_hole_cards(table_backend.seat_assignments)
+				table_backend.dealer.dealer_script.deal_hole_cards(table_backend.seat_assignments, "Hand1")
 			elif state_in_state == 2:
 				print("State_in_State.deal_card_two")
-				table_backend.dealer.dealer_script.deal_hole_cards(table_backend.seat_assignments)
+				table_backend.dealer.dealer_script.deal_hole_cards(table_backend.seat_assignments, "Hand2")
 		State.DEALED_CARD:
 			print("State.DEALED_CARD")
 			seats = table_backend.seat_assignments.keys()
@@ -353,7 +411,7 @@ func _process(delta):
 			elif state_in_state == 2:
 				print("State_in_State.burn_card")
 				sub_state = SubState.CARD_MOVING
-				table_backend.dealer.dealer_script.burn_card()
+				table_backend.dealer.dealer_script.burn_card("Flop")
 			elif state_in_state == 3:
 				print("State_in_State.reveal_community_cards")
 				sub_state = SubState.CARD_MOVING
@@ -403,7 +461,7 @@ func _process(delta):
 			elif state_in_state == 2:
 				print("State_in_State.burn_card")
 				sub_state = SubState.CARD_MOVING
-				table_backend.dealer.dealer_script.burn_card()
+				table_backend.dealer.dealer_script.burn_card("Turn")
 			elif state_in_state == 3:
 				print("State_in_State.reveal_community_cards")
 				sub_state = SubState.CARD_MOVING
@@ -453,7 +511,7 @@ func _process(delta):
 			elif state_in_state == 2:
 				print("State_in_State.burn_card")
 				sub_state = SubState.CARD_MOVING
-				table_backend.dealer.dealer_script.burn_card()
+				table_backend.dealer.dealer_script.burn_card("River")
 			elif state_in_state == 3:
 				print("State_in_State.reveal_community_cards")
 				sub_state = SubState.CARD_MOVING
@@ -554,7 +612,7 @@ func _process(delta):
 		State.DISTRIBUTIONING_POTS:
 			print("State.DISTRIBUTIONING_POTS")
 			sub_state = SubState.POTS_COLLECTING
-			table_backend.dealer.dealer_script.distribute_pots(active_players)
+			table_backend.dealer.dealer_script.distribute_pots(active_players, table_backend.seat_assignments)
 		State.DISTRIBUTIONED_POTS:
 			print("State.DISTRIBUTIONED_POTS")
 			next_state()
