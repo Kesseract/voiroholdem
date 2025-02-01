@@ -248,7 +248,7 @@ func bet_state():
 
 	current_action += 1
 
-func _process(delta):
+func _process(_delta):
 	if sub_state != SubState.READY:
 		# print(n_moving)
 		# print("SubState:" + str(sub_state))
