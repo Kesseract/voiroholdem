@@ -157,6 +157,7 @@ extends Control
 }
 
 #TODO 次のタスク
+# テストのためのリファクタリング
 
 # 必要な値
 var bet_size = { "name": "table_1 bb:2 sb:1", "bb": 2, "sb": 1 }
@@ -164,7 +165,7 @@ var buy_in = 100
 var dealer_name = "ずんだもん"
 var selected_cpus = ["四国めたん", "ずんだもん", "春日部つむぎ", "雨晴はう", "冥鳴ひまり"]
 var player = false
-var seeing = true	# 表側を表示するかどうか。trueなら見せる。falseなら見せない
+var seeing = false	# 表側を表示するかどうか。trueなら見せる。falseなら見せない
 
 var game_process
 
@@ -175,7 +176,7 @@ func _ready():
 	game_process.name = "GameProcessBackend"
 	add_child(game_process)
 
-func _process(delta):
+func _process(_delta):
 
 	# 各クラスの状態を更新
 	update_debug_label()

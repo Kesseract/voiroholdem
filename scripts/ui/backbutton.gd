@@ -1,6 +1,9 @@
 extends TextureButton
 
 func _ready():
+	_init_signal()
+
+func _init_signal():
 	connect("pressed", Callable(self, "_on_button_pressed"))
 
 func _on_button_pressed():

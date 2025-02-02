@@ -307,7 +307,7 @@ func _process(_delta):
 						child.disconnect(signal_name["name"], Callable(self, "_signal_handler"))
 
 				# 子ノードを削除
-				remove_child(child)
+				table_backend.dealer.dealer_script.remove_child(child)
 				child.queue_free()
 
 			table_backend.dealer.dealer_script.deck = DeckBackend.new(seeing)

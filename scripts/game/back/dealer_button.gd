@@ -10,6 +10,8 @@ var moving = false
 var move_dur = 0.0				# 移動所要時間（単位：秒）
 var move_elapsed = 0.0			# 移動経過時間（単位：秒）
 
+signal waiting_finished
+
 func _init(_seeing):
 	seeing = _seeing
 
@@ -31,4 +33,4 @@ func _process(delta):
 		move_elapsed = min(move_elapsed, move_dur)	# 行き過ぎ防止
 		if move_elapsed == move_dur:		# 移動終了の場合
 			moving = false
-			emit_signal("waiting_finished")	# 移動終了シグナル発行
+			waiting_finished.emit()	# 移動終了シグナル発行

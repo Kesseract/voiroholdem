@@ -217,16 +217,3 @@ const WINDOW_SIZES = [
 func _ready():
 	# ここでJSONファイルを読み込むようにすると、ユーザーが任意で値を切り替えられるようになる
 	pass  # 必要に応じて初期化処理を追加
-
-# delay: 指定した秒数だけ待機する
-func delay(seconds: float):
-	var timer = Timer.new()
-	timer.one_shot = true
-	timer.wait_time = seconds
-	get_tree().root.add_child(timer)  # Timerをツリーに追加
-	timer.start()
-	timer.queue_free()  # Timerを解放
-
-# pause: 一時停止して入力で再開する
-func pause():
-	get_tree().paused = true  # 一時停止

@@ -65,13 +65,14 @@ func bet(amount: int) -> int:
 	return actual_bet
 
 # フォールドする
-func fold():
-	hand[0].front.queue_free_flg = true
-	var dst1 = hand[0].front.get_position() + Vector2(0, -50)
-	hand[0].front.wait_move_to(0.1, dst1, 0.5)
-	hand[1].front.queue_free_flg = true
-	var dst2 = hand[1].front.get_position() + Vector2(0, -50)
-	hand[1].front.wait_move_to(0.1, dst2, 0.5)
+func fold(seeing):
+	if seeing:
+		hand[0].front.queue_free_flg = true
+		var dst1 = hand[0].front.get_position() + Vector2(0, -50)
+		hand[0].front.wait_move_to(0.1, dst1, 0.5)
+		hand[1].front.queue_free_flg = true
+		var dst2 = hand[1].front.get_position() + Vector2(0, -50)
+		hand[1].front.wait_move_to(0.1, dst2, 0.5)
 	hand.clear()
 	is_folded = true
 

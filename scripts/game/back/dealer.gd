@@ -119,7 +119,7 @@ func set_initial_button(seat_assignments):
 	# 座席リストを取得
 	var seats = seat_assignments.keys()
 	var dealer_player = seat_assignments[seats[0]]
-	var dealer_seat = "Dealer"
+	var dealer_seat = "Seat1"
 
 	# ランク定義 (2〜10, J, Q, K, A)
 	const RANKS = {
@@ -153,6 +153,7 @@ func set_initial_button(seat_assignments):
 		table_place["DealerButton"].add_child(dealer_button.front)
 		dealer_button.front.move_to(animation_place[dealer_seat]["Seat"].get_position() + animation_place[dealer_seat]["DealerButton"].get_position(), 0.5)
 	else:
+		dealer_button.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
 		dealer_button.wait_to(1.0)
 
 	return dealer_player
@@ -173,9 +174,12 @@ func hand_clear(seat_assignments):
 			player.player_script.hand.clear()
 			n_moving_plus.emit()
 
-	burn_cards[0].front.queue_free_flg = true
-	var dst = burn_cards[0].front.get_position() + Vector2(0, -50)
-	burn_cards[0].front.wait_move_to(0.1, dst, 0.5)
+	if seeing:
+		burn_cards[0].front.queue_free_flg = true
+		var dst = burn_cards[0].front.get_position() + Vector2(0, -50)
+		burn_cards[0].front.wait_move_to(0.1, dst, 0.5)
+	else:
+		wait_to(0.5)
 	burn_cards.clear()
 	n_moving_plus.emit()
 
@@ -285,12 +289,14 @@ func set_action_list(player, current_max_bet, seats, seat_assignments) -> Array:
 # 選択されたアクションによってプレイヤーの状態を更新
 func selected_action(action, player, current_max_bet, bb_value, current_seat):
 	if action == "fold":
-		player.player_script.fold()
-		n_moving_plus.emit()
+		player.player_script.fold(seeing)
+		if seeing:
+			n_moving_plus.emit()
 		player.player_script.last_action.append("Fold")
 	elif action == "check":
 		player.player_script.last_action.append("Check")
-		player.front.move_to(Vector2(0, 0), 0.5)
+		if seeing:
+			player.front.move_to(Vector2(0, 0), 0.5)
 	elif action == "call":
 		var call_amount = current_max_bet - player.player_script.current_bet
 		player.player_script.bet(call_amount)
@@ -447,7 +453,8 @@ func bet_round(seats, start_index: int, seat_assignments: Dictionary, bb_value: 
 					n_active_players_plus.emit()
 				other_player.player_script.has_acted = false
 
-	# player.player_script.wait_to(0.5)
+	if not seeing:
+		player.player_script.wait_to(0.5)
 	action_finished.emit()
 
 	return action
@@ -532,7 +539,7 @@ func pot_collect(seat_assignments: Dictionary) -> int:
 			if animation_place[seat]["Bet"].get_child_count() > 0:
 				var bet = animation_place[seat]["Bet"].get_child(0)
 				bet.add_chip = false
-				bet.queue_free = true
+				bet.queue_free_flg = true
 				bet.move_to(table_place["Pot"].get_position() - (animation_place[seat]["Seat"].get_position() + animation_place[seat]["Bet"].get_position()), 0.5)
 				n_moving_plus.emit()
 
@@ -627,8 +634,11 @@ func distribute_pots(active_players, seat_assignments):
 			winner.front.set_bet_value(total_chips)
 			var pot = table_place["Pot"].get_child(0)
 			pot.add_chip = false
-			pot.queue_free = true
+			pot.queue_free_flg = true
 			pot.move_to((animation_place[winner_seat]["Seat"].get_position() + animation_place[winner_seat]["Bet"].get_position()) - table_place["Pot"].get_position(), 0.5)
+			n_moving_plus.emit()
+		else:
+			wait_to(0.5)
 			n_moving_plus.emit()
 		return
 
@@ -673,6 +683,9 @@ func distribute_pots(active_players, seat_assignments):
 					pot_front.move_to((animation_place[winner_seat]["Seat"].get_position() + animation_place[winner_seat]["Bet"].get_position()) - table_place["Pot"].get_position(), 0.5)
 					n_moving_plus.emit()
 					i += 1
+				else:
+					winner.player_script.wait_to(0.5)
+					n_moving_plus.emit()
 
 # ラウンドの終了後に必要な情報をリセットする
 func reset_round(seat_assignments: Dictionary, buy_in: int):
@@ -751,6 +764,10 @@ func reset_round(seat_assignments: Dictionary, buy_in: int):
 
 	# n. その他の必要な情報をリセット（必要に応じて追加）
 
+	if not seeing:
+		wait_to(0.5)
+		n_moving_plus.emit()
+
 # ディーラーボタンを次のプレイヤーに移動します
 func move_dealer_button(seat_assignments: Dictionary):
 	# 現在のディーラーを見つける
@@ -783,6 +800,9 @@ func move_dealer_button(seat_assignments: Dictionary):
 	if seeing:
 		var dealer_button_node = table_place["DealerButton"].get_children(0)[0]
 		dealer_button_node.move_to(animation_place[next_dealer_seat]["Seat"].get_position() + animation_place[next_dealer_seat]["DealerButton"].get_position(), 0.5)
+		n_moving_plus.emit()
+	else:
+		wait_to(0.5)
 		n_moving_plus.emit()
 
 func wait_wait_to(wait : float, dur : float):

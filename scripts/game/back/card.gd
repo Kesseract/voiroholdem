@@ -45,6 +45,7 @@ func wait_wait_to(wait : float, dur : float):
 	waiting_time = wait
 	#wait_elapsed = 0.0
 	wait_to(dur)
+
 func wait_to(dur : float):
 	move_dur = dur
 	move_elapsed = 0.0
