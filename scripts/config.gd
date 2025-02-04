@@ -1,47 +1,51 @@
 extends Node
 
-var config_data = {}
-
-# デフォルト設定
-const DEFAULT_CONFIG = {
+var default_config_data = {
+	# サウンド設定
 	"bgm_volume": 1.0,
 	"se_volume": 1.0,
 	"voice_volume": 1.0,
+
+	# グラフィック設定
 	"resolution": "1280x720",
 	"fullscreen": false
 }
 
-const CONFIG_PATH = "user://config.cfg"
-
-# `FileAccess` をラップして、モック可能に
-var file_access_class = FileAccess  # ここにモックを注入可能
-
+# ゲーム起動時に実行される処理
 func _ready():
-	load_config()
+	# 設定ファイルが存在するか確認
+	if FileAccess.file_exists("user://config.cfg"):
+		# 存在する場合は設定を読み込む
+		load_config()
+	else:
+		# 存在しない場合はデフォルト設定でファイルを作成
+		save_config(default_config_data)
+		load_config()
 
-# 📌 設定を保存
-func save_config():
-	var file = file_access_class.open(CONFIG_PATH, FileAccess.WRITE)
+# 設定の保存
+func save_config(config_data: Dictionary):
+	var config_path = "user://config.cfg"
+	var file = FileAccess.open(config_path, FileAccess.WRITE)
 	if file:
 		file.store_var(config_data)
 		file.close()
 
-# 📌 設定を読み込む
-func load_config():
-	if file_access_class.file_exists(CONFIG_PATH):
-		var file = file_access_class.open(CONFIG_PATH, FileAccess.READ)
+# 設定の読み込み
+func load_config() -> Dictionary:
+	var config_path = "user://config.cfg"
+	var config_data = {}
+
+	if FileAccess.file_exists(config_path):
+		var file = FileAccess.open(config_path, FileAccess.READ)
 		if file:
-			config_data = file.get_var()
+			config_data = file.get_var()  # 読み込むデータ形式が正しいかも確認
 			file.close()
+			DisplayServer.window_set_size(Vector2(int(config_data["resolution"].split("x")[0]), int(config_data["resolution"].split("x")[1])))
+			if config_data["fullscreen"]:
+				DisplayServer.window_set_mode(DisplayServer.WindowMode.WINDOW_MODE_FULLSCREEN)
+			else:
+				DisplayServer.window_set_mode(DisplayServer.WindowMode.WINDOW_MODE_WINDOWED)
 	else:
-		# ファイルがない場合はデフォルト値を適用
-		config_data = DEFAULT_CONFIG.duplicate(true)
-		save_config()
-
-	apply_settings()
-
-# 📌 画面設定を適用
-func apply_settings():
-	var res = config_data["resolution"].split("x")
-	DisplayServer.window_set_size(Vector2(int(res[0]), int(res[1])))
-	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if config_data["fullscreen"] else DisplayServer.WINDOW_MODE_WINDOWED)
+		# デフォルト値を設定
+		save_config(default_config_data)  # ファイルがない場合にデフォルト値を保存する
+	return config_data
