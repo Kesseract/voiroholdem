@@ -13,7 +13,6 @@ var animation_place
 var table_place
 
 var seeing
-
 var time_manager
 
 signal action_finished
@@ -120,23 +119,18 @@ func set_initial_button(seat_assignments):
 	var dealer_seat = "Seat1"
 
 	# ランク定義 (2〜10, J, Q, K, A)
-	const RANKS = {
-		"2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9, "10": 10,
-		"J": 11, "Q": 12, "K": 13, "A": 14
-	}
+	var ranks = hand_evaluator.RANKS
 
-	const SUIT = {
-		"♣︎": 1, "♦︎": 2, "♥︎": 3, "♠︎": 4
-	}
+	var suits = hand_evaluator.SUITS
 
 	# 最高のカードを持つプレイヤーを探す
 	for seat in seats:
 		var current_player = seat_assignments[seat]
 		if current_player:
 			if dealer_player == null or (
-				RANKS[current_player.player_script.hand[0].rank] > RANKS[dealer_player.player_script.hand[0].rank] or
-				(RANKS[current_player.player_script.hand[0].rank] == RANKS[dealer_player.player_script.hand[0].rank] and
-				SUIT[current_player.player_script.hand[0].suit] > SUIT[dealer_player.player_script.hand[0].suit])):
+				ranks[current_player.player_script.hand[0].rank] > ranks[dealer_player.player_script.hand[0].rank] or
+				(ranks[current_player.player_script.hand[0].rank] == ranks[dealer_player.player_script.hand[0].rank] and
+				suits[current_player.player_script.hand[0].suit] > suits[dealer_player.player_script.hand[0].suit])):
 				dealer_player = current_player
 				dealer_seat = seat
 

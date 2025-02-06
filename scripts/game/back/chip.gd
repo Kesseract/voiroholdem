@@ -3,7 +3,6 @@ class_name ChipBackend
 
 var seeing
 var front
-
 var time_manager
 
 func _init(_seeing):

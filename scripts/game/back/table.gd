@@ -1,8 +1,6 @@
 extends Node
 class_name TableBackend
 
-var front
-
 var sb
 var bb
 var buy_in
@@ -23,6 +21,8 @@ var seat_assignments = {
 	"Seat5": null, "Seat6": null, "Seat7": null,
 	"Seat8": null, "Seat9": null, "Seat10": null, "Dealer": null,
 }
+
+var front
 
 signal n_moving_plus
 

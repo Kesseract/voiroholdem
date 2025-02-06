@@ -16,6 +16,12 @@ var hand_category
 var hand_rank
 var rebuy_count
 
+var action_mapping = {
+	"fold": ["fold"],
+	"check/call": ["check", "call"],
+	"bet/raise": ["bet", "raise"]
+}
+
 # アクションとベット額を保持するプロパティ
 var selected_action: String  # プレイヤーが選択したアクション
 var selected_bet_amount: int = 0  # プレイヤーが選択したベット額
@@ -66,12 +72,10 @@ func bet(amount: int) -> int:
 # フォールドする
 func fold(seeing):
 	if seeing:
-		hand[0].front.queue_free_flg = true
-		var dst1 = hand[0].front.get_position() + Vector2(0, -50)
-		hand[0].front.wait_move_to(0.1, dst1, 0.5)
-		hand[1].front.queue_free_flg = true
-		var dst2 = hand[1].front.get_position() + Vector2(0, -50)
-		hand[1].front.wait_move_to(0.1, dst2, 0.5)
+		for i in range(hand.size()):
+			hand[i].front.queue_free_flg = true
+			var dst = hand[i].front.get_position() + Vector2(0, -50)
+			hand[i].front.wait_move_to(0.1, dst, 0.5)
 	hand.clear()
 	is_folded = true
 
@@ -98,13 +102,6 @@ func _cpu_select_action(available_actions: Array) -> String:
 	return available_actions[randi() % available_actions.size()]
 
 func _player_select_action(available_actions: Array) -> String:
-	# マッピングテーブル
-	var action_mapping = {
-		"fold": ["fold"],
-		"check/call": ["check", "call"],
-		"bet/raise": ["bet", "raise"]
-	}
-
 	# selected_action をマッピングで確認
 	if selected_action in action_mapping:
 		for action in action_mapping[selected_action]:

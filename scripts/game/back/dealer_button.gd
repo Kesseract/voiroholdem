@@ -2,9 +2,7 @@ extends Node
 class_name DealerButtonBackend
 
 var front
-
 var seeing
-
 var time_manager
 
 func _init(_seeing):

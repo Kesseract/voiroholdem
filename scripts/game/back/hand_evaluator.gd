@@ -19,6 +19,10 @@ const RANKS = {
 	"J": 11, "Q": 12, "K": 13, "A": 14
 }
 
+const SUITS = {
+	"♣︎": 1, "♦︎": 2, "♥︎": 3, "♠︎": 4
+}
+
 # ハンドの強さを評価する
 func evaluate_hand(player_hand: Array, community_cards: Array) -> Dictionary:
 	var combined_cards = player_hand + community_cards

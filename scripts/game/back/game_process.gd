@@ -45,6 +45,7 @@ enum SubState {
 
 var state = State.INIT
 var sub_state = SubState.READY
+var state_in_state = 0
 
 var bet_size
 var bb
@@ -58,9 +59,6 @@ var player_flg
 var seeing
 
 var table_backend
-
-var state_in_state = 0
-
 var n_moving = 0
 
 var initial_dealer

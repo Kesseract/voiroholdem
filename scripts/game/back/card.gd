@@ -1,18 +1,11 @@
 extends Node
 class_name CardBackend
 
-var front
-
 var rank
 var suit
 
+var front
 var seeing
-
-var waiting_time = 0.0			# ウェイト時間（単位：秒）
-var moving = false
-var move_dur = 0.0				# 移動所要時間（単位：秒）
-var move_elapsed = 0.0			# 移動経過時間（単位：秒）
-
 var time_manager
 
 func _init(_rank, _suit, _seeing):
