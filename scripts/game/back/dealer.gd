@@ -14,12 +14,8 @@ var table_place
 
 var seeing
 
-var waiting_time = 0.0			# ウェイト時間（単位：秒）
-var moving = false
-var move_dur = 0.0				# 移動所要時間（単位：秒）
-var move_elapsed = 0.0			# 移動経過時間（単位：秒）
+var time_manager
 
-signal waiting_finished
 signal action_finished
 
 signal n_moving_plus
@@ -37,6 +33,10 @@ func _init(_game_process, _seeing):
 	community_cards = []
 	burn_cards = []
 	hand_evaluator = HandEvaluatorBackend.new()
+	time_manager = TimeManager.new()
+
+func _ready() -> void:
+	add_child(time_manager)
 
 # 現在の状態を文字列として取得する
 func to_str() -> String:
@@ -73,8 +73,7 @@ func burn_card(place):
 		card.front.connect("moving_finished", Callable(game_process, "_on_moving_finished"))
 		card.front.connect("moving_finished_queue_free", Callable(game_process, "_on_moving_finished_queue_free").bind(card.front))
 	else:
-		card.wait_to(1.0)
-		card.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
+		card.time_manager.wait_to(1.0, Callable(game_process, "_on_moving_finished"))
 	n_moving_plus.emit()
 	burn_cards.append(card)
 
@@ -109,8 +108,7 @@ func deal_card(seat_assignments, start_position := 0):
 			card.front.connect("moving_finished", Callable(game_process, "_on_moving_finished"))
 			card.front.connect("moving_finished_queue_free", Callable(game_process, "_on_moving_finished_queue_free").bind(card.front))
 		else:
-			card.wait_wait_to(wait, 1.0)
-			card.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
+			card.time_manager.wait_wait_to(wait, 1.0, Callable(game_process, "_on_moving_finished"))
 		n_moving_plus.emit()
 		wait += 0.3
 
@@ -153,8 +151,7 @@ func set_initial_button(seat_assignments):
 		table_place["DealerButton"].add_child(dealer_button.front)
 		dealer_button.front.move_to(animation_place[dealer_seat]["Seat"].get_position() + animation_place[dealer_seat]["DealerButton"].get_position(), 0.5)
 	else:
-		dealer_button.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
-		dealer_button.wait_to(1.0)
+		dealer_button.time_manager.wait_to(1.0, Callable(game_process, "_on_moving_finished"))
 
 	return dealer_player
 
@@ -170,7 +167,7 @@ func hand_clear(seat_assignments):
 				var player_dst = player.player_script.hand[0].front.get_position() + Vector2(0, -50)
 				player.player_script.hand[0].front.wait_move_to(0.1, player_dst, 0.5)
 			else:
-				player.player_script.wait_wait_to(0.1, 0.5)
+				player.player_script.time_manager.wait_wait_to(0.1, 0.5, Callable(game_process, "_on_moving_finished"))
 			player.player_script.hand.clear()
 			n_moving_plus.emit()
 
@@ -179,7 +176,7 @@ func hand_clear(seat_assignments):
 		var dst = burn_cards[0].front.get_position() + Vector2(0, -50)
 		burn_cards[0].front.wait_move_to(0.1, dst, 0.5)
 	else:
-		wait_to(0.5)
+		time_manager.wait_to(0.5, Callable(game_process, "_on_moving_finished"))
 	burn_cards.clear()
 	n_moving_plus.emit()
 
@@ -248,7 +245,7 @@ func distribute_single_card(seats, start_position, seat_assignments, base_delay,
 				card.front.connect("moving_finished", Callable(game_process, "_on_moving_finished"))
 				card.front.connect("moving_finished_queue_free", Callable(game_process, "_on_moving_finished_queue_free").bind(card.front))
 			else:
-				player.player_script.wait_wait_to(delay, card_delay)
+				player.player_script.time_manager.wait_wait_to(delay, card_delay, Callable(game_process, "_on_moving_finished"))
 			n_moving_plus.emit()
 			delay += delay_base  # 次のプレイヤーの待機時間を計算
 	return delay
@@ -316,7 +313,7 @@ func selected_action(action, player, current_max_bet, bb_value, current_seat):
 			animation_place[current_seat]["Bet"].add_child(chip)
 			chip.move_to(Vector2(0, 0), 0.5)
 		else:
-			player.player_script.wait_to(0.5)
+			player.player_script.time_manager.wait_to(0.5, Callable(game_process, "_on_moving_finished"))
 		player.player_script.last_action.append("Call")
 	elif action == "bet":
 		var min_bet = bb_value * 2 - player.player_script.current_bet
@@ -348,7 +345,7 @@ func selected_action(action, player, current_max_bet, bb_value, current_seat):
 			animation_place[current_seat]["Bet"].add_child(chip)
 			chip.move_to(Vector2(0, 0), 0.5)
 		else:
-			player.player_script.wait_to(0.5)
+			player.player_script.time_manager.wait_to(0.5, Callable(game_process, "_on_moving_finished"))
 		current_max_bet = bet_amount
 		bet_record.append(player.player_script.current_bet)
 	elif action == "raise":
@@ -384,7 +381,7 @@ func selected_action(action, player, current_max_bet, bb_value, current_seat):
 			animation_place[current_seat]["Bet"].add_child(chip)
 			chip.move_to(Vector2(0, 0), 0.5)
 		else:
-			player.player_script.wait_to(0.5)
+			player.player_script.time_manager.wait_to(0.5, Callable(game_process, "_on_moving_finished"))
 		bet_record.append(player.player_script.current_bet)
 	elif action == "all-in":
 		var all_in_amount = player.player_script.chips
@@ -405,7 +402,7 @@ func selected_action(action, player, current_max_bet, bb_value, current_seat):
 			animation_place[current_seat]["Bet"].add_child(chip)
 			chip.move_to(Vector2(0, 0), 0.5)
 		else:
-			player.player_script.wait_to(0.5)
+			player.player_script.time_manager.wait_to(0.5, Callable(game_process, "_on_moving_finished"))
 		player.player_script.last_action.append("All-In")
 		player.player_script.is_all_in = true
 		if all_in_amount > current_max_bet:
@@ -454,7 +451,7 @@ func bet_round(seats, start_index: int, seat_assignments: Dictionary, bb_value: 
 				other_player.player_script.has_acted = false
 
 	if not seeing:
-		player.player_script.wait_to(0.5)
+		player.player_script.time_manager.wait_to(0.5, Callable(game_process, "_on_moving_finished"))
 	action_finished.emit()
 
 	return action
@@ -498,10 +495,9 @@ func pot_collect(seat_assignments: Dictionary) -> int:
 					pot.add_contribution(player.player_script.player_name, contribution)
 					player.player_script.current_bet -= contribution
 					var chip = ChipBackend.new(seeing)
-					chip.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
 					add_child(chip)
 					if not seeing:
-						chip.wait_wait_to(i * 0.3, 1.0)
+						chip.time_manager.wait_wait_to(i * 0.3, 1.0, Callable(game_process, "_on_moving_finished"))
 						n_moving_plus.emit()
 						i += 1
 
@@ -518,10 +514,9 @@ func pot_collect(seat_assignments: Dictionary) -> int:
 					pots.append(pot)
 				pots[-1].add_contribution(player.player_script.player_name, player.player_script.current_bet)
 				var chip = ChipBackend.new(seeing)
-				chip.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
 				add_child(chip)
 				if not seeing:
-					chip.wait_wait_to(i * 0.3, 1.0)
+					chip.time_manager.wait_wait_to(i * 0.3, 1.0, Callable(game_process, "_on_moving_finished"))
 					n_moving_plus.emit()
 					i += 1
 				player.player_script.current_bet = 0
@@ -576,8 +571,7 @@ func reveal_community_cards(num_cards: Array) -> Array:
 			card.front.connect("moving_finished", Callable(game_process, "_on_moving_finished"))
 			card.front.connect("moving_finished_queue_free", Callable(game_process, "_on_moving_finished_queue_free").bind(card.front))
 		else:
-			card.wait_to(1.0)
-			card.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
+			card.time_manager.wait_to(1.0, Callable(game_process, "_on_moving_finished"))
 		n_moving_plus.emit()
 
 	return community_cards
@@ -638,7 +632,7 @@ func distribute_pots(active_players, seat_assignments):
 			pot.move_to((animation_place[winner_seat]["Seat"].get_position() + animation_place[winner_seat]["Bet"].get_position()) - table_place["Pot"].get_position(), 0.5)
 			n_moving_plus.emit()
 		else:
-			wait_to(0.5)
+			time_manager.wait_to(0.5, Callable(game_process, "_on_moving_finished"))
 			n_moving_plus.emit()
 		return
 
@@ -684,7 +678,7 @@ func distribute_pots(active_players, seat_assignments):
 					n_moving_plus.emit()
 					i += 1
 				else:
-					winner.player_script.wait_to(0.5)
+					winner.player_script.time_manager.wait_to(0.5, Callable(game_process, "_on_moving_finished"))
 					n_moving_plus.emit()
 
 # ラウンドの終了後に必要な情報をリセットする
@@ -762,10 +756,14 @@ func reset_round(seat_assignments: Dictionary, buy_in: int):
 	deck = DeckBackend.new(seeing)
 	add_child(deck)
 
+	# 6. タイムマネージャーのリセット
+	time_manager = TimeManager.new()
+	add_child(time_manager)
+
 	# n. その他の必要な情報をリセット（必要に応じて追加）
 
 	if not seeing:
-		wait_to(0.5)
+		time_manager.wait_to(0.5, Callable(game_process, "_on_moving_finished"))
 		n_moving_plus.emit()
 
 # ディーラーボタンを次のプレイヤーに移動します
@@ -802,26 +800,5 @@ func move_dealer_button(seat_assignments: Dictionary):
 		dealer_button_node.move_to(animation_place[next_dealer_seat]["Seat"].get_position() + animation_place[next_dealer_seat]["DealerButton"].get_position(), 0.5)
 		n_moving_plus.emit()
 	else:
-		wait_to(0.5)
+		time_manager.wait_to(0.5, Callable(game_process, "_on_moving_finished"))
 		n_moving_plus.emit()
-
-func wait_wait_to(wait : float, dur : float):
-	waiting_time = wait
-	#wait_elapsed = 0.0
-	wait_to(dur)
-
-func wait_to(dur : float):
-	move_dur = dur
-	move_elapsed = 0.0
-	moving = true
-
-func _process(delta):
-	if waiting_time > 0.0:
-		waiting_time -= delta
-		return
-	if moving:		# 移動処理中
-		move_elapsed += delta	# 経過時間
-		move_elapsed = min(move_elapsed, move_dur)	# 行き過ぎ防止
-		if move_elapsed == move_dur:		# 移動終了の場合
-			moving = false
-			waiting_finished.emit()

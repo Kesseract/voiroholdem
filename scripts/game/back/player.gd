@@ -20,18 +20,17 @@ var rebuy_count
 var selected_action: String  # プレイヤーが選択したアクション
 var selected_bet_amount: int = 0  # プレイヤーが選択したベット額
 
-var waiting_time = 0.0			# ウェイト時間（単位：秒）
-var moving = false
-var move_dur = 0.0				# 移動所要時間（単位：秒）
-var move_elapsed = 0.0			# 移動経過時間（単位：秒）
-
-signal waiting_finished
+var time_manager
 
 # 初期化
 func _init(_name: String, _chips: int, _is_cpu: bool = false):
 	player_name = _name
 	chips = _chips
 	is_cpu = _is_cpu
+	time_manager = TimeManager.new()
+
+func _ready() -> void:
+	add_child(time_manager)
 
 # 現在の状態を文字列として取得する
 func to_str() -> String:
@@ -129,24 +128,3 @@ func _cpu_select_bet_amount(min_amount: int, max_amount: int) -> int:
 # func _player_select_bet_amount(min_amount: int, max_amount: int) -> int:
 func _player_select_bet_amount() -> int:
 	return int(selected_bet_amount)  # スケーリング結果を整数に変換して返す
-
-func wait_wait_to(wait : float, dur : float):
-	waiting_time = wait
-	#wait_elapsed = 0.0
-	wait_to(dur)
-
-func wait_to(dur : float):
-	move_dur = dur
-	move_elapsed = 0.0
-	moving = true
-
-func _process(delta):
-	if waiting_time > 0.0:
-		waiting_time -= delta
-		return
-	if moving:		# 移動処理中
-		move_elapsed += delta	# 経過時間
-		move_elapsed = min(move_elapsed, move_dur)	# 行き過ぎ防止
-		if move_elapsed == move_dur:		# 移動終了の場合
-			moving = false
-			waiting_finished.emit()

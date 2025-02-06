@@ -70,6 +70,8 @@ var current_action
 var n_active_players = 0
 var active_players = []
 
+var time_manager
+
 func _init(_bet_size, _buy_in, _dealer_name, _selected_cpus, _table_place, _animation_place, _player_flg, _seeing):
 	bet_size = _bet_size
 	bb = bet_size["bb"]
@@ -81,9 +83,10 @@ func _init(_bet_size, _buy_in, _dealer_name, _selected_cpus, _table_place, _anim
 	animation_place = _animation_place
 	player_flg = _player_flg
 	seeing = _seeing
+	time_manager = TimeManager.new()
 
 func _ready():
-	pass
+	add_child(time_manager)
 
 func _on_n_moving_plus():
 	n_moving += 1
@@ -313,6 +316,7 @@ func _process(_delta):
 			table_backend.dealer.dealer_script.deck = DeckBackend.new(seeing)
 			table_backend.dealer.dealer_script.deck.name = "DeckBackend"
 			table_backend.dealer.dealer_script.add_child(table_backend.dealer.dealer_script.deck)
+			table_backend.dealer.dealer_script.time_manager = TimeManager.new()
 
 			next_state()
 		State.PAYING_SB_BB:
@@ -333,7 +337,7 @@ func _process(_delta):
 				animation_place[sb_seat]["Bet"].add_child(chip)
 				chip.move_to(Vector2(0, 0), 1.0)
 			else:
-				sb_player.player_script.wait_to(1.0)
+				sb_player.player_script.time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
 			table_backend.dealer.dealer_script.bet_record.append(sb)
 			_on_n_moving_plus()
 
@@ -353,7 +357,7 @@ func _process(_delta):
 				animation_place[bb_seat]["Bet"].add_child(chip)
 				chip.move_to(Vector2(0, 0), 1.0)
 			else:
-				bb_player.player_script.wait_to(1.0)
+				bb_player.player_script.time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
 			table_backend.dealer.dealer_script.bet_record.append(bb)
 			_on_n_moving_plus()
 
@@ -406,7 +410,7 @@ func _process(_delta):
 					if player != null:
 						if not player.player_script.is_folded:
 							active_players.append(player)
-				table_backend.dealer.dealer_script.wait_to(1.0)
+				time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
 				_on_n_moving_plus()
 			elif state_in_state == 2:
 				print("State_in_State.burn_card")
@@ -456,7 +460,7 @@ func _process(_delta):
 					if player != null:
 						if not player.player_script.is_folded:
 							active_players.append(player)
-				table_backend.dealer.dealer_script.wait_to(1.0)
+				time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
 				_on_n_moving_plus()
 			elif state_in_state == 2:
 				print("State_in_State.burn_card")
@@ -506,7 +510,7 @@ func _process(_delta):
 					if player != null:
 						if not player.player_script.is_folded:
 							active_players.append(player)
-				table_backend.dealer.dealer_script.wait_to(1.0)
+				time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
 				_on_n_moving_plus()
 			elif state_in_state == 2:
 				print("State_in_State.burn_card")
@@ -556,7 +560,7 @@ func _process(_delta):
 					if player != null:
 						if not player.player_script.is_folded:
 							active_players.append(player)
-				table_backend.dealer.dealer_script.wait_to(1.0)
+				time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
 				_on_n_moving_plus()
 			elif state_in_state == 2:
 				print("State_in_State.burn_card")
@@ -590,21 +594,14 @@ func _process(_delta):
 				print("State_inState:CARD_OPENING")
 				sub_state = SubState.CARD_OPENING
 				# カードオープン
-				for seat in seats:
-					var player = table_backend.seat_assignments[seat]
-					if player != null:
-						if not player.player_script.is_folded:
-							for card in player.player_script.hand:
-								card.connect("waiting_finished", Callable(self, "_on_moving_finished"))
-								card.wait_to(1.0)
-							_on_n_moving_plus()
-							_on_n_moving_plus()
+				time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
+				_on_n_moving_plus()
 			elif state_in_state == 1:
 				print("State_inState:evaluate_hand")
 				# 手の強さ判定
 				sub_state = SubState.CARD_OPENING
 				active_players = table_backend.dealer.dealer_script.evaluate_hand(table_backend.seat_assignments)
-				table_backend.dealer.dealer_script.wait_to(1.0)
+				time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
 				_on_n_moving_plus()
 		State.SHOW_DOWN_END:
 			print("State.SHOW_DOWN_END")

@@ -67,7 +67,6 @@ func _init(_game_process, _bet_size, _buy_in, _dealer_name, _selected_cpus, _tab
 
 		if role == "playing_dealer":
 			dealer = cpu_player
-			dealer.player_script.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
 			dealer_flg = true
 		else:
 			cpu_players.append(cpu_player)
@@ -91,8 +90,7 @@ func seat_dealer():
 		dealer.front.move_to(dst, 1.0)
 		dealer.front.connect("moving_finished", Callable(game_process, "_on_moving_finished"))
 	else:
-		dealer.dealer_script.wait_to(1.0)
-	dealer.dealer_script.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
+		dealer.dealer_script.time_manager.wait_to(1.0, Callable(game_process, "_on_moving_finished"))
 	dealer.dealer_script.connect("n_active_players_plus", Callable(game_process, "_on_n_active_players_plus"))
 	dealer.dealer_script.connect("action_finished", Callable(game_process, "_on_action_finished"))
 	dealer.dealer_script.animation_place = animation_place
@@ -126,8 +124,7 @@ func seat_cpus():
 				cpu.front.connect("moving_finished", Callable(game_process, "_on_moving_finished"))
 				# 初期チップの表示
 			else:
-				cpu.player_script.wait_wait_to(wait, 1.0)
-				cpu.player_script.connect("waiting_finished", Callable(game_process, "_on_moving_finished"))
+				cpu.player_script.time_manager.wait_wait_to(wait, 1.0, Callable(game_process, "_on_moving_finished"))
 			wait += 0.3
 
 			n_moving_plus.emit()
