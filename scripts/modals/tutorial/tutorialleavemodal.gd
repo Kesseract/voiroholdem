@@ -1,23 +1,23 @@
 extends Window
 
 func _ready():
-	$VBoxContainer/OK.connect("pressed", Callable(self, "_on_ok_button_pressed"))
+    $VBoxContainer/OK.connect("pressed", Callable(self, "_on_ok_button_pressed"))
 
-	$VBoxContainer/Cancel.connect("pressed", Callable(self, "_on_cancel_button_pressed"))
-	
-	# Windowの×ボタンが押されたときにモーダルを閉じる
-	self.connect("close_requested", Callable(self, "_on_close_requested"))
+    $VBoxContainer/Cancel.connect("pressed", Callable(self, "_on_cancel_button_pressed"))
+
+    # Windowの×ボタンが押されたときにモーダルを閉じる
+    self.connect("close_requested", Callable(self, "_on_close_requested"))
 
 func _on_close_button_pressed():
-	hide()
-	
+    hide()
+
 func _on_cancel_button_pressed():
-	queue_free()
+    queue_free()
 
 func _on_ok_button_pressed():
 
-	# モーダルを閉じる
-	self.queue_free()
+    # モーダルを閉じる
+    self.queue_free()
 
-	# 次のゲーム画面に遷移
-	get_tree().change_scene_to_file("res://scenes/main/TutorialLobby.tscn")
+    # 次のゲーム画面に遷移
+    get_tree().change_scene_to_file("res://scenes/main/TutorialLobby.tscn")

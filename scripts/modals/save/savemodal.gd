@@ -7,11 +7,11 @@ var save_file_extension = ".dat"
 
 func _ready():
 
-	# OKボタンが押されたときの処理を設定
+    # OKボタンが押されたときの処理を設定
     $VBoxContainer/OK.connect("pressed", Callable(self, "_on_ok_pressed"))
-	# Close ボタンのシグナル接続
+    # Close ボタンのシグナル接続
     $VBoxContainer/Close.connect("pressed", Callable(self, "_on_close_button_pressed"))
-	# Windowの×ボタンが押されたときにモーダルを閉じる
+    # Windowの×ボタンが押されたときにモーダルを閉じる
     self.connect("close_requested", Callable(self, "_on_close_requested"))
 
 func _on_close_button_pressed():
@@ -22,16 +22,16 @@ func _on_close_requested():
 
 func _on_ok_pressed():
 
-	# 現在Globalにおいてあるslot_numberに、チップ数と現在時刻をセーブする
+    # 現在Globalにおいてあるslot_numberに、チップ数と現在時刻をセーブする
     var now = Time.get_datetime_dict_from_system()
     var data = {
-		"player_name": Global.player_name,
-		"chips": Global.chips,
-		"last_save_date": "%04d-%02d-%02d %02d:%02d:%02d" % [now["year"], now["month"], now["day"], now["hour"], now["minute"], now["second"]]
-	}
+        "player_name": Global.player_name,
+        "chips": Global.chips,
+        "last_save_date": "%04d-%02d-%02d %02d:%02d:%02d" % [now["year"], now["month"], now["day"], now["hour"], now["minute"], now["second"]]
+    }
     save_game(slot_number, data)
 
-	# モーダルを閉じる
+    # モーダルを閉じる
     queue_free()
 
 
