@@ -26,12 +26,14 @@ var action_mapping = {
 var selected_action: String  # プレイヤーが選択したアクション
 var selected_bet_amount: int = 0  # プレイヤーが選択したベット額
 
+var game_process
 var time_manager
 
 # 初期化
-func _init(_name: String, _chips: int, _is_cpu: bool = false):
+func _init(_name: String, _chips: int, _game_process, _is_cpu: bool = false):
 	player_name = _name
 	chips = _chips
+	game_process = _game_process
 	is_cpu = _is_cpu
 	time_manager = TimeManager.new()
 
@@ -73,9 +75,8 @@ func bet(amount: int) -> int:
 func fold(seeing):
 	if seeing:
 		for i in range(hand.size()):
-			hand[i].front.queue_free_flg = true
 			var dst = hand[i].front.get_position() + Vector2(0, -50)
-			hand[i].front.wait_move_to(0.1, dst, 0.5)
+			hand[i].front.time_manager.wait_move_to(0.1, hand[i].front, dst, 0.5, Callable(game_process, "_on_moving_finished_queue_free").bind(hand[i].front))
 	hand.clear()
 	is_folded = true
 

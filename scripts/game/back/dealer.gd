@@ -68,9 +68,7 @@ func burn_card(place):
 		card.front.show_back()
 		card.front.set_position(table_place["Deck"].get_position() - table_place["Burn"]["Instance"].get_position())
 		table_place["Burn"][place].add_child(card.front)
-		card.front.move_to(table_place["Burn"][place].get_position(), 0.5)
-		card.front.connect("moving_finished", Callable(game_process, "_on_moving_finished"))
-		card.front.connect("moving_finished_queue_free", Callable(game_process, "_on_moving_finished_queue_free").bind(card.front))
+		card.front.time_manager.move_to(card.front, table_place["Burn"][place].get_position(), 0.5, Callable(game_process, "_on_moving_finished"))
 	else:
 		card.time_manager.wait_to(1.0, Callable(game_process, "_on_moving_finished"))
 	n_moving_plus.emit()
@@ -103,9 +101,7 @@ func deal_card(seat_assignments, start_position := 0):
 			# Dealer Seatの位置から、current_seat Seat + current_seat Hand1した位置を引いて、全体にHandのスケールの逆数をかける
 			card.front.set_position((table_place["Deck"].get_position() - (animation_place[current_seat]["Seat"].get_position() + animation_place[current_seat]["Hand1"].get_position())) * (1 / 0.6))
 			animation_place[current_seat]["Hand1"].add_child(card.front)
-			card.front.wait_move_to(wait, Vector2(0, 0), 0.5)
-			card.front.connect("moving_finished", Callable(game_process, "_on_moving_finished"))
-			card.front.connect("moving_finished_queue_free", Callable(game_process, "_on_moving_finished_queue_free").bind(card.front))
+			card.front.time_manager.wait_move_to(wait, card.front, Vector2(0, 0), 0.5, Callable(game_process, "_on_moving_finished"))
 		else:
 			card.time_manager.wait_wait_to(wait, 1.0, Callable(game_process, "_on_moving_finished"))
 		n_moving_plus.emit()
@@ -141,9 +137,8 @@ func set_initial_button(seat_assignments):
 	n_moving_plus.emit()
 	if seeing:
 		dealer_button.front.set_position(animation_place["Dealer"]["Seat"].get_position() + animation_place["Dealer"]["DealerButton"].get_position())
-		dealer_button.front.connect("moving_finished", Callable(game_process, "_on_moving_finished"))
 		table_place["DealerButton"].add_child(dealer_button.front)
-		dealer_button.front.move_to(animation_place[dealer_seat]["Seat"].get_position() + animation_place[dealer_seat]["DealerButton"].get_position(), 0.5)
+		dealer_button.front.time_manager.move_to(dealer_button.front, animation_place[dealer_seat]["Seat"].get_position() + animation_place[dealer_seat]["DealerButton"].get_position(), 0.5, Callable(game_process, "_on_moving_finished"))
 	else:
 		dealer_button.time_manager.wait_to(1.0, Callable(game_process, "_on_moving_finished"))
 
@@ -157,18 +152,17 @@ func hand_clear(seat_assignments):
 		var player = seat_assignments[seat]
 		if player:
 			if seeing:
-				player.player_script.hand[0].front.queue_free_flg = true
-				var player_dst = player.player_script.hand[0].front.get_position() + Vector2(0, -50)
-				player.player_script.hand[0].front.wait_move_to(0.1, player_dst, 0.5)
+				var front_node = player.player_script.hand[0].front
+				var player_dst = front_node.get_position() + Vector2(0, -50)
+				front_node.time_manager.wait_move_to(0.1, front_node, player_dst, 0.5, Callable(game_process, "_on_moving_finished_queue_free").bind(front_node))
 			else:
 				player.player_script.time_manager.wait_wait_to(0.1, 0.5, Callable(game_process, "_on_moving_finished"))
 			player.player_script.hand.clear()
 			n_moving_plus.emit()
 
 	if seeing:
-		burn_cards[0].front.queue_free_flg = true
 		var dst = burn_cards[0].front.get_position() + Vector2(0, -50)
-		burn_cards[0].front.wait_move_to(0.1, dst, 0.5)
+		burn_cards[0].front.time_manager.wait_move_to(0.1, burn_cards[0].front, dst, 0.5, Callable(game_process, "_on_moving_finished_queue_free").bind(burn_cards[0].front))
 	else:
 		time_manager.wait_to(0.5, Callable(game_process, "_on_moving_finished"))
 	burn_cards.clear()
@@ -235,9 +229,7 @@ func distribute_single_card(seats, start_position, seat_assignments, base_delay,
 				# Dealer Seatの位置から、current_seat Seat + current_seat Hand1した位置を引いて、全体にHandのスケールの逆数をかける
 				card.front.set_position((table_place["Deck"].get_position() - (animation_place[seats[current_position]]["Seat"].get_position() + animation_place[seats[current_position]][hand].get_position())) * (1 / 0.6))
 				animation_place[seats[current_position]][hand].add_child(card.front)
-				card.front.wait_move_to(delay, Vector2(0, 0), card_delay)
-				card.front.connect("moving_finished", Callable(game_process, "_on_moving_finished"))
-				card.front.connect("moving_finished_queue_free", Callable(game_process, "_on_moving_finished_queue_free").bind(card.front))
+				card.front.time_manager.wait_move_to(delay, card.front, Vector2(0, 0), card_delay, Callable(game_process, "_on_moving_finished"))
 			else:
 				player.player_script.time_manager.wait_wait_to(delay, card_delay, Callable(game_process, "_on_moving_finished"))
 			n_moving_plus.emit()
@@ -287,27 +279,10 @@ func selected_action(action, player, current_max_bet, bb_value, current_seat):
 	elif action == "check":
 		player.player_script.last_action.append("Check")
 		if seeing:
-			player.front.move_to(Vector2(0, 0), 0.5)
+			player.front.time_manager.move_to(player.front, Vector2(0, 0), 0.5, Callable(game_process, "_on_moving_finished"))
 	elif action == "call":
 		var call_amount = current_max_bet - player.player_script.current_bet
-		player.player_script.bet(call_amount)
-		if seeing:
-			player.front.set_chips(player.player_script.chips)
-			var chip_instance = load("res://scenes/gamecomponents/Chip.tscn")
-			var chip = chip_instance.instantiate()
-			chip.set_chip_sprite(false)
-			chip.set_bet_value(call_amount)
-			chip.connect("moving_finished", Callable(game_process, "_on_moving_finished"))
-			chip.connect("moving_finished_queue_free", Callable(game_process, "_on_moving_finished_queue_free").bind(chip))
-			if animation_place[current_seat]["Bet"].get_child_count() > 0:
-				var already_chip = animation_place[current_seat]["Bet"].get_child(0)
-				chip.connect("moving_finished_add_chip", Callable(game_process, "_on_moving_finished_add_chip").bind(chip, already_chip))
-				chip.add_chip = true
-			chip.set_position(-1 * animation_place[current_seat]["Bet"].get_position())
-			animation_place[current_seat]["Bet"].add_child(chip)
-			chip.move_to(Vector2(0, 0), 0.5)
-		else:
-			player.player_script.time_manager.wait_to(0.5, Callable(game_process, "_on_moving_finished"))
+		set_bet(call_amount, player, current_seat)
 		player.player_script.last_action.append("Call")
 	elif action == "bet":
 		var min_bet = bb_value * 2 - player.player_script.current_bet
@@ -322,24 +297,7 @@ func selected_action(action, player, current_max_bet, bb_value, current_seat):
 			player.player_script.last_action.append("All-In")
 		else:
 			player.player_script.last_action.append("Bet")
-		player.player_script.bet(bet_amount)
-		if seeing:
-			player.front.set_chips(player.player_script.chips)
-			var chip_instance = load("res://scenes/gamecomponents/Chip.tscn")
-			var chip = chip_instance.instantiate()
-			chip.set_chip_sprite(false)
-			chip.set_bet_value(bet_amount)
-			chip.connect("moving_finished", Callable(game_process, "_on_moving_finished"))
-			chip.connect("moving_finished_queue_free", Callable(game_process, "_on_moving_finished_queue_free").bind(chip))
-			if animation_place[current_seat]["Bet"].get_child_count() > 0:
-				var already_chip = animation_place[current_seat]["Bet"].get_child(0)
-				chip.connect("moving_finished_add_chip", Callable(game_process, "_on_moving_finished_add_chip").bind(chip, already_chip))
-				chip.add_chip = true
-			chip.set_position(-1 * animation_place[current_seat]["Bet"].get_position())
-			animation_place[current_seat]["Bet"].add_child(chip)
-			chip.move_to(Vector2(0, 0), 0.5)
-		else:
-			player.player_script.time_manager.wait_to(0.5, Callable(game_process, "_on_moving_finished"))
+		set_bet(bet_amount, player, current_seat)
 		current_max_bet = bet_amount
 		bet_record.append(player.player_script.current_bet)
 	elif action == "raise":
@@ -358,49 +316,33 @@ func selected_action(action, player, current_max_bet, bb_value, current_seat):
 			player.player_script.last_action.append("All-In")
 		else:
 			player.player_script.last_action.append("Raise")
-		player.player_script.bet(raise_amount)
-		if seeing:
-			player.front.set_chips(player.player_script.chips)
-			var chip_instance = load("res://scenes/gamecomponents/Chip.tscn")
-			var chip = chip_instance.instantiate()
-			chip.set_chip_sprite(false)
-			chip.set_bet_value(raise_amount)
-			chip.connect("moving_finished", Callable(game_process, "_on_moving_finished"))
-			chip.connect("moving_finished_queue_free", Callable(game_process, "_on_moving_finished_queue_free").bind(chip))
-			if animation_place[current_seat]["Bet"].get_child_count() > 0:
-				var already_chip = animation_place[current_seat]["Bet"].get_child(0)
-				chip.connect("moving_finished_add_chip", Callable(game_process, "_on_moving_finished_add_chip").bind(chip, already_chip))
-				chip.add_chip = true
-			chip.set_position(-1 * animation_place[current_seat]["Bet"].get_position())
-			animation_place[current_seat]["Bet"].add_child(chip)
-			chip.move_to(Vector2(0, 0), 0.5)
-		else:
-			player.player_script.time_manager.wait_to(0.5, Callable(game_process, "_on_moving_finished"))
+		set_bet(raise_amount, player, current_seat)
 		bet_record.append(player.player_script.current_bet)
 	elif action == "all-in":
 		var all_in_amount = player.player_script.chips
-		player.player_script.bet(all_in_amount)
-		if seeing:
-			player.front.set_chips(player.player_script.chips)
-			var chip_instance = load("res://scenes/gamecomponents/Chip.tscn")
-			var chip = chip_instance.instantiate()
-			chip.set_chip_sprite(false)
-			chip.set_bet_value(all_in_amount)
-			chip.connect("moving_finished", Callable(game_process, "_on_moving_finished"))
-			chip.connect("moving_finished_queue_free", Callable(game_process, "_on_moving_finished_queue_free").bind(chip))
-			if animation_place[current_seat]["Bet"].get_child_count() > 0:
-				var already_chip = animation_place[current_seat]["Bet"].get_child(0)
-				chip.connect("moving_finished_add_chip", Callable(game_process, "_on_moving_finished_add_chip").bind(chip, already_chip))
-				chip.add_chip = true
-			chip.set_position(-1 * animation_place[current_seat]["Bet"].get_position())
-			animation_place[current_seat]["Bet"].add_child(chip)
-			chip.move_to(Vector2(0, 0), 0.5)
-		else:
-			player.player_script.time_manager.wait_to(0.5, Callable(game_process, "_on_moving_finished"))
+		set_bet(all_in_amount, player, current_seat)
 		player.player_script.last_action.append("All-In")
 		player.player_script.is_all_in = true
 		if all_in_amount > current_max_bet:
 			current_max_bet = all_in_amount
+
+func set_bet(amount, player, current_seat):
+	player.player_script.bet(amount)
+	if seeing:
+		player.front.set_chips(player.player_script.chips)
+		var chip_scene = load("res://scenes/gamecomponents/Chip.tscn")
+		var chip_instance = chip_scene.instantiate()
+		chip_instance.set_chip_sprite(false)
+		chip_instance.set_bet_value(amount)
+		chip_instance.set_position(-1 * animation_place[current_seat]["Bet"].get_position())
+		if animation_place[current_seat]["Bet"].get_child_count() > 0:
+			var already_chip = animation_place[current_seat]["Bet"].get_child(0)
+			chip_instance.time_manager.move_to(chip_instance, Vector2(0, 0), 0.5, Callable(game_process, "_on_moving_finished_add_chip").bind(chip_instance, already_chip))
+		else:
+			chip_instance.time_manager.move_to(chip_instance, Vector2(0, 0), 0.5, Callable(game_process, "_on_moving_finished"))
+		animation_place[current_seat]["Bet"].add_child(chip_instance)
+	else:
+		player.player_script.time_manager.wait_to(0.5, Callable(game_process, "_on_moving_finished"))
 
 # ベットラウンドのアクションを処理
 func bet_round(seats, start_index: int, seat_assignments: Dictionary, bb_value: int, current_action: int):
@@ -527,9 +469,7 @@ func pot_collect(seat_assignments: Dictionary) -> int:
 		for seat in seat_assignments.keys():
 			if animation_place[seat]["Bet"].get_child_count() > 0:
 				var bet = animation_place[seat]["Bet"].get_child(0)
-				bet.add_chip = false
-				bet.queue_free_flg = true
-				bet.move_to(table_place["Pot"].get_position() - (animation_place[seat]["Seat"].get_position() + animation_place[seat]["Bet"].get_position()), 0.5)
+				bet.time_manager.move_to(bet, table_place["Pot"].get_position() - (animation_place[seat]["Seat"].get_position() + animation_place[seat]["Bet"].get_position()), 0.5, Callable(game_process, "_on_moving_finished_queue_free").bind(bet))
 				n_moving_plus.emit()
 
 		# ここで全部集めて、合計値をポットとして表示する
@@ -541,8 +481,6 @@ func pot_collect(seat_assignments: Dictionary) -> int:
 			var chip = chip_instance.instantiate()
 			chip.set_chip_sprite(true)
 			chip.set_bet_value(total_chips)
-			chip.connect("moving_finished", Callable(game_process, "_on_moving_finished"))
-			chip.connect("moving_finished_queue_free", Callable(game_process, "_on_moving_finished_queue_free").bind(chip))
 			table_place["Pot"].add_child(chip)
 
 	return total_chips
@@ -561,9 +499,7 @@ func reveal_community_cards(num_cards: Array) -> Array:
 			# Dealer Seatの位置から、current_seat Seat + current_seat Hand1した位置を引いて、全体にHandのスケールの逆数をかける
 			card.front.set_position(table_place["Deck"].get_position() - table_place["CommunityCard"][place].get_position())
 			table_place["CommunityCard"][place].add_child(card.front)
-			card.front.move_to(Vector2(0, 0), 0.5)
-			card.front.connect("moving_finished", Callable(game_process, "_on_moving_finished"))
-			card.front.connect("moving_finished_queue_free", Callable(game_process, "_on_moving_finished_queue_free").bind(card.front))
+			card.front.time_manager.move_to(card.front, Vector2(0, 0), 0.5, Callable(game_process, "_on_moving_finished"))
 		else:
 			card.time_manager.wait_to(1.0, Callable(game_process, "_on_moving_finished"))
 		n_moving_plus.emit()
@@ -621,9 +557,7 @@ func distribute_pots(active_players, seat_assignments):
 		if seeing:
 			winner.front.set_bet_value(total_chips)
 			var pot = table_place["Pot"].get_child(0)
-			pot.add_chip = false
-			pot.queue_free_flg = true
-			pot.move_to((animation_place[winner_seat]["Seat"].get_position() + animation_place[winner_seat]["Bet"].get_position()) - table_place["Pot"].get_position(), 0.5)
+			pot.time_manager.move_to(pot, (animation_place[winner_seat]["Seat"].get_position() + animation_place[winner_seat]["Bet"].get_position()) - table_place["Pot"].get_position(), 0.5, Callable(game_process, "_on_moving_finished_queue_free").bind(pot))
 			n_moving_plus.emit()
 		else:
 			time_manager.wait_to(0.5, Callable(game_process, "_on_moving_finished"))
@@ -666,9 +600,7 @@ func distribute_pots(active_players, seat_assignments):
 						pot_front.set_bet_value(chips_per_winner)
 						table_place["Pot"].add_child(pot_front)
 						table_place["Pot"].get_child(0).set_bet_value(-1 * chips_per_winner)
-					pot_front.add_chip = false
-					pot_front.queue_free_flg = true
-					pot_front.move_to((animation_place[winner_seat]["Seat"].get_position() + animation_place[winner_seat]["Bet"].get_position()) - table_place["Pot"].get_position(), 0.5)
+					pot_front.time_manager.move_to(pot_front, (animation_place[winner_seat]["Seat"].get_position() + animation_place[winner_seat]["Bet"].get_position()) - table_place["Pot"].get_position(), 0.5, Callable(game_process, "_on_moving_finished_queue_free").bind(pot_front))
 					n_moving_plus.emit()
 					i += 1
 				else:
@@ -695,12 +627,12 @@ func reset_round(seat_assignments: Dictionary, buy_in: int):
 		for seat in seats:
 			var player = seat_assignments[seat]
 			if player and player.player_script.hand.size() == 2:
-				player.player_script.hand[0].front.queue_free_flg = true
-				var dst1 = player.player_script.hand[0].front.get_position() + Vector2(0, -50)
-				player.player_script.hand[0].front.wait_move_to(0.1, dst1, 0.5)
-				player.player_script.hand[1].front.queue_free_flg = true
-				var dst2 = player.player_script.hand[1].front.get_position() + Vector2(0, -50)
-				player.player_script.hand[1].front.wait_move_to(0.1, dst2, 0.5)
+				var hand = player.player_script.hand[0].front
+				var dst1 = hand.get_position() + Vector2(0, -50)
+				hand.time_manager.wait_move_to(0.1, hand, dst1, 0.5, Callable(game_process, "_on_moving_finished_queue_free").bind(hand))
+				hand = player.player_script.hand[1].front
+				var dst2 = hand.get_position() + Vector2(0, -50)
+				hand.time_manager.wait_move_to(0.1, hand, dst2, 0.5, Callable(game_process, "_on_moving_finished_queue_free").bind(hand))
 				n_moving_plus.emit()
 				n_moving_plus.emit()
 
@@ -725,15 +657,15 @@ func reset_round(seat_assignments: Dictionary, buy_in: int):
 
 	if seeing:
 		for j in range(community_cards.size()):
-			community_cards[j].front.queue_free_flg = true
-			var community_card = community_cards[j].front.get_position() + Vector2(0, -50)
-			community_cards[j].front.move_to(community_card, 0.5)
+			var card_front = community_cards[j].front
+			var community_card = card_front.get_position() + Vector2(0, -50)
+			card_front.time_manager.move_to(card_front, community_card, 0.5, Callable(game_process, "_on_moving_finished_queue_free").bind(card_front))
 			n_moving_plus.emit()
 
 		for k in range(burn_cards.size()):
-			burn_cards[k].front.queue_free_flg = true
-			var burn_card_place = burn_cards[k].front.get_position() + Vector2(0, -50)
-			burn_cards[k].front.move_to(burn_card_place, 0.5)
+			var card_front = burn_cards[k].front
+			var burn_card_place = card_front.get_position() + Vector2(0, -50)
+			card_front.time_manager.move_to(card_front, burn_card_place, 0.5, Callable(game_process, "_on_moving_finished_queue_free").bind(card_front))
 			n_moving_plus.emit()
 
 	community_cards = []
@@ -791,7 +723,7 @@ func move_dealer_button(seat_assignments: Dictionary):
 
 	if seeing:
 		var dealer_button_node = table_place["DealerButton"].get_children(0)[0]
-		dealer_button_node.move_to(animation_place[next_dealer_seat]["Seat"].get_position() + animation_place[next_dealer_seat]["DealerButton"].get_position(), 0.5)
+		dealer_button_node.time_manager.move_to(dealer_button_node, animation_place[next_dealer_seat]["Seat"].get_position() + animation_place[next_dealer_seat]["DealerButton"].get_position(), 0.5, Callable(game_process, "_on_moving_finished"))
 		n_moving_plus.emit()
 	else:
 		time_manager.wait_to(0.5, Callable(game_process, "_on_moving_finished"))

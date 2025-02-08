@@ -31,7 +31,7 @@ func _init(_game_process, _participant_name, _chips, _is_cpu, _role, _seeing):
 	seeing = _seeing
 
 	if role != "dealer":
-		player_script = PlayerBackend.new(participant_name, chips, is_cpu)
+		player_script = PlayerBackend.new(participant_name, chips, game_process, is_cpu)
 		player_script.name = "PlayerBackend"
 		add_child(player_script)
 

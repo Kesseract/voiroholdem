@@ -364,11 +364,9 @@ func process_PAYING_SB_BB():
 		var chip = chip_instance.instantiate()
 		chip.set_chip_sprite(false)
 		chip.set_bet_value(sb)
-		chip.connect("moving_finished", Callable(self, "_on_moving_finished"))
-		chip.connect("moving_finished_queue_free", Callable(self, "_on_moving_finished_queue_free").bind(chip))
 		chip.set_position(-1 * animation_place[sb_seat]["Bet"].get_position())
 		animation_place[sb_seat]["Bet"].add_child(chip)
-		chip.move_to(Vector2(0, 0), 1.0)
+		chip.time_manager.move_to(chip, Vector2(0, 0), 1.0, Callable(self, "_on_moving_finished"))
 	else:
 		sb_player.player_script.time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
 	table_backend.dealer.dealer_script.bet_record.append(sb)
@@ -384,11 +382,9 @@ func process_PAYING_SB_BB():
 
 		chip.set_chip_sprite(false)
 		chip.set_bet_value(bb)
-		chip.connect("moving_finished", Callable(self, "_on_moving_finished"))
-		chip.connect("moving_finished_queue_free", Callable(self, "_on_moving_finished_queue_free").bind(chip))
 		chip.set_position(-1 * animation_place[bb_seat]["Bet"].get_position())
 		animation_place[bb_seat]["Bet"].add_child(chip)
-		chip.move_to(Vector2(0, 0), 1.0)
+		chip.time_manager.move_to(chip, Vector2(0, 0), 1.0, Callable(self, "_on_moving_finished"))
 	else:
 		bb_player.player_script.time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
 	table_backend.dealer.dealer_script.bet_record.append(bb)

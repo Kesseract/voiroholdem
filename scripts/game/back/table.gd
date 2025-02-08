@@ -87,8 +87,7 @@ func seat_dealer():
 		var dst = dealer.front.get_position()
 		dealer.front.set_position(dealer.front.get_position() + Vector2(0, -75))
 		animation_place["Dealer"]["Participant"].add_child(dealer.front)
-		dealer.front.move_to(dst, 1.0)
-		dealer.front.connect("moving_finished", Callable(game_process, "_on_moving_finished"))
+		dealer.front.time_manager.move_to(dealer.front, dst, 1.0, Callable(game_process, "_on_moving_finished"))
 	else:
 		dealer.dealer_script.time_manager.wait_to(1.0, Callable(game_process, "_on_moving_finished"))
 	dealer.dealer_script.connect("n_active_players_plus", Callable(game_process, "_on_n_active_players_plus"))
@@ -120,8 +119,7 @@ func seat_cpus():
 				cpu.front.set_position(cpu.front.get_position() + Vector2(0, -75))
 				animation_place[random_seat]["Participant"].add_child(cpu.front)
 				# cpu.front.add_child_node = animation_place[random_seat]["Participant"]
-				cpu.front.wait_move_to(wait, dst, 1.0)
-				cpu.front.connect("moving_finished", Callable(game_process, "_on_moving_finished"))
+				cpu.front.time_manager.wait_move_to(wait, cpu.front, dst, 1.0, Callable(game_process, "_on_moving_finished"))
 				# 初期チップの表示
 			else:
 				cpu.player_script.time_manager.wait_wait_to(wait, 1.0, Callable(game_process, "_on_moving_finished"))

@@ -10,12 +10,7 @@ var chips
 @onready var add_child_node = null
 var add_child_flg = false
 
-var waiting_time = 0.0			# ウェイト時間（単位：秒）
-var moving = false
-var move_dur = 0.0				# 移動所要時間（単位：秒）
-var move_elapsed = 0.0			# 移動経過時間（単位：秒）
-var src_pos = Vector2(0, 0)		# 移動元位置
-var dst_pos = Vector2(0, 0)		# 移動先位置
+var time_manager
 
 @onready var node = {
 	"Player": {
@@ -39,10 +34,10 @@ var dst_pos = Vector2(0, 0)		# 移動先位置
 }
 
 func _init():
-	pass
+	time_manager = TimeManager.new()
 
 func _ready():
-	pass
+	add_child(time_manager)
 
 func set_sprite(value):
 	sprite.texture = value
@@ -109,29 +104,3 @@ func set_parameter(_backend, _seat):
 	# 名前とチップ数を設定
 	set_name_action(backend.participant_name)
 	set_chips(backend.chips)
-
-func wait_move_to(wait : float, dst : Vector2, dur : float):
-	waiting_time = wait
-	#wait_elapsed = 0.0
-	move_to(dst, dur)
-
-func move_to(dst : Vector2, dur : float):
-	src_pos = get_position()
-	dst_pos = dst
-	move_dur = dur
-	move_elapsed = 0.0
-	moving = true
-	pass
-
-func _process(delta):
-	if waiting_time > 0.0:
-		waiting_time -= delta
-		return
-	if moving:		# 移動処理中
-		move_elapsed += delta	# 経過時間
-		move_elapsed = min(move_elapsed, move_dur)	# 行き過ぎ防止
-		var r = move_elapsed / move_dur				# 位置割合
-		set_position(src_pos * (1.0 - r) + dst_pos * r)		# 位置更新
-		if move_elapsed == move_dur:		# 移動終了の場合
-			moving = false
-			moving_finished.emit()
