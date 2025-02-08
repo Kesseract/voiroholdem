@@ -70,7 +70,35 @@ var active_players = []
 
 var time_manager
 
-var state_function_map = {}
+var state_function_map = {
+	State.INIT: process_INIT,
+	State.SEATING_PLAYER: process_SEATING_PLAYER,
+	State.SEATING_DEALER: process_SEATING_DEALER,
+	State.SEATING_CPUS: process_SEATING_CPUS,
+	State.SEATING_COMPLETED: process_SEATING_COMPLETED,
+	State.SETTING_DEALER_BUTTON: process_SETTING_DEALER_BUTTON,
+	State.DEALER_SET: process_DEALER_SET,
+	State.PAYING_SB_BB: process_PAYING_SB_BB,
+	State.SB_BB_PAID: process_SB_BB_PAID,
+	State.DEALING_CARD: process_DEALING_CARD,
+	State.DEALED_CARD: process_DEALED_CARD,
+	State.PRE_FLOP_ACTION: process_ACTION,
+	State.PRE_FLOP_ACTION_END: process_ACTION_END,
+	State.FLOP_ACTION: process_ACTION,
+	State.FLOP_ACTION_END: process_ACTION_END,
+	State.TURN_ACTION: process_ACTION,
+	State.TURN_ACTION_END: process_ACTION_END,
+	State.RIVER_ACTION: process_ACTION,
+	State.RIVER_ACTION_END: process_ACTION_END,
+	State.SHOW_DOWN: process_SHOW_DOWN,
+	State.SHOW_DOWN_END: process_SHOW_DOWN_END,
+	State.DISTRIBUTIONING_POTS: process_DISTRIBUTIONING_POTS,
+	State.DISTRIBUTIONED_POTS: process_DISTRIBUTIONED_POTS,
+	State.ROUND_RESETTING: process_ROUND_RESETTING,
+	State.ROUND_RESETED: process_ROUND_RESETED,
+	State.NEXT_DEALER_BUTTON: process_NEXT_DEALER_BUTTON,
+	State.MOVED_DEALER_BUTTON: process_MOVED_DEALER_BUTTON
+}
 
 func _init(_bet_size, _buy_in, _dealer_name, _selected_cpus, _table_place, _animation_place, _player_flg, _seeing):
 	bet_size = _bet_size
@@ -87,36 +115,6 @@ func _init(_bet_size, _buy_in, _dealer_name, _selected_cpus, _table_place, _anim
 
 func _ready():
 	add_child(time_manager)
-	# 各 State の処理関数を辞書に登録
-	state_function_map = {
-		State.INIT: process_INIT,
-		State.SEATING_PLAYER: process_SEATING_PLAYER,
-		State.SEATING_DEALER: process_SEATING_DEALER,
-		State.SEATING_CPUS: process_SEATING_CPUS,
-		State.SEATING_COMPLETED: process_SEATING_COMPLETED,
-		State.SETTING_DEALER_BUTTON: process_SETTING_DEALER_BUTTON,
-		State.DEALER_SET: process_DEALER_SET,
-		State.PAYING_SB_BB: process_PAYING_SB_BB,
-		State.SB_BB_PAID: process_SB_BB_PAID,
-		State.DEALING_CARD: process_DEALING_CARD,
-		State.DEALED_CARD: process_DEALED_CARD,
-		State.PRE_FLOP_ACTION: process_ACTION,
-		State.PRE_FLOP_ACTION_END: process_ACTION_END,
-		State.FLOP_ACTION: process_ACTION,
-		State.FLOP_ACTION_END: process_ACTION_END,
-		State.TURN_ACTION: process_ACTION,
-		State.TURN_ACTION_END: process_ACTION_END,
-		State.RIVER_ACTION: process_ACTION,
-		State.RIVER_ACTION_END: process_ACTION_END,
-		State.SHOW_DOWN: process_SHOW_DOWN,
-		State.SHOW_DOWN_END: process_SHOW_DOWN_END,
-		State.DISTRIBUTIONING_POTS: process_DISTRIBUTIONING_POTS,
-		State.DISTRIBUTIONED_POTS: process_DISTRIBUTIONED_POTS,
-		State.ROUND_RESETTING: process_ROUND_RESETTING,
-		State.ROUND_RESETED: process_ROUND_RESETED,
-		State.NEXT_DEALER_BUTTON: process_NEXT_DEALER_BUTTON,
-		State.MOVED_DEALER_BUTTON: process_MOVED_DEALER_BUTTON
-	}
 
 func _on_n_moving_plus():
 	n_moving += 1
@@ -187,6 +185,12 @@ func _on_action_finished():
 	n_moving += 1
 	n_active_players -= 1
 	print("n_active_players: " + str(n_active_players))
+
+func _on_player_seated(seat_node):
+	print("Player seated at:", seat_node.name)
+	# 席選択完了 → 状態遷移
+	sub_state = SubState.READY
+	state = State.SEATING_CPUS
 
 func next_state():
 	if sub_state != SubState.READY:
@@ -565,9 +569,3 @@ func _process(_delta):
 		state_function_map[state].call()
 	else:
 		print("⚠️ 未対応のState:", state)
-
-func on_player_seated(seat_node):
-	print("Player seated at:", seat_node.name)
-	# 席選択完了 → 状態遷移
-	sub_state = SubState.READY
-	state = State.SEATING_CPUS
