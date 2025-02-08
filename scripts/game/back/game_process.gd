@@ -70,6 +70,8 @@ var active_players = []
 
 var time_manager
 
+var state_function_map = {}
+
 func _init(_bet_size, _buy_in, _dealer_name, _selected_cpus, _table_place, _animation_place, _player_flg, _seeing):
 	bet_size = _bet_size
 	bb = bet_size["bb"]
@@ -85,6 +87,36 @@ func _init(_bet_size, _buy_in, _dealer_name, _selected_cpus, _table_place, _anim
 
 func _ready():
 	add_child(time_manager)
+	# 各 State の処理関数を辞書に登録
+	state_function_map = {
+		State.INIT: process_INIT,
+		State.SEATING_PLAYER: process_SEATING_PLAYER,
+		State.SEATING_DEALER: process_SEATING_DEALER,
+		State.SEATING_CPUS: process_SEATING_CPUS,
+		State.SEATING_COMPLETED: process_SEATING_COMPLETED,
+		State.SETTING_DEALER_BUTTON: process_SETTING_DEALER_BUTTON,
+		State.DEALER_SET: process_DEALER_SET,
+		State.PAYING_SB_BB: process_PAYING_SB_BB,
+		State.SB_BB_PAID: process_SB_BB_PAID,
+		State.DEALING_CARD: process_DEALING_CARD,
+		State.DEALED_CARD: process_DEALED_CARD,
+		State.PRE_FLOP_ACTION: process_ACTION,
+		State.PRE_FLOP_ACTION_END: process_ACTION_END,
+		State.FLOP_ACTION: process_ACTION,
+		State.FLOP_ACTION_END: process_ACTION_END,
+		State.TURN_ACTION: process_ACTION,
+		State.TURN_ACTION_END: process_ACTION_END,
+		State.RIVER_ACTION: process_ACTION,
+		State.RIVER_ACTION_END: process_ACTION_END,
+		State.SHOW_DOWN: process_SHOW_DOWN,
+		State.SHOW_DOWN_END: process_SHOW_DOWN_END,
+		State.DISTRIBUTIONING_POTS: process_DISTRIBUTIONING_POTS,
+		State.DISTRIBUTIONED_POTS: process_DISTRIBUTIONED_POTS,
+		State.ROUND_RESETTING: process_ROUND_RESETTING,
+		State.ROUND_RESETED: process_ROUND_RESETED,
+		State.NEXT_DEALER_BUTTON: process_NEXT_DEALER_BUTTON,
+		State.MOVED_DEALER_BUTTON: process_MOVED_DEALER_BUTTON
+	}
 
 func _on_n_moving_plus():
 	n_moving += 1
@@ -249,382 +281,290 @@ func bet_state():
 
 	current_action += 1
 
+func process_INIT():
+	print("State.INIT")
+	table_backend = TableBackend.new(self, bet_size, buy_in, dealer_name, selected_cpus, table_place, animation_place, seeing)
+	table_backend.connect("n_moving_plus", Callable(self, "_on_n_moving_plus"))
+	table_backend.dealer.dealer_script.connect("n_moving_plus", Callable(self, "_on_n_moving_plus"))
+	table_backend.name = "TableBackend"
+	add_child(table_backend)
+	next_state()
+
+func process_SEATING_PLAYER():
+	print("State.SEATING_PLAYER")
+	sub_state = SubState.PLAYER_INPUT
+	table_backend.seat_player()
+
+func process_SEATING_DEALER():
+	print("State.SEATING_DEALER")
+	sub_state = SubState.PARTICIPANT_MOVING
+	table_backend.seat_dealer()
+
+func process_SEATING_CPUS():
+	print("State.SEATING_CPUS")
+	sub_state = SubState.PARTICIPANT_MOVING
+	table_backend.seat_cpus()
+
+func process_SEATING_COMPLETED():
+	print("State.SEATING_COMPLETED")
+	next_state()
+
+func process_SETTING_DEALER_BUTTON():
+	print("State.SETTING_DEALER_BUTTON")
+	if state_in_state == 0:
+		print("State_in_State.burn_card")
+		sub_state = SubState.CARD_MOVING
+		table_backend.dealer.dealer_script.burn_card("SetInitialDealer")
+	elif state_in_state == 1:
+		print("State_in_State.deal_card")
+		sub_state = SubState.CARD_MOVING
+		table_backend.dealer.dealer_script.deal_card(table_backend.seat_assignments)
+	elif state_in_state == 2:
+		print("State_in_State.set_initial_button")
+		sub_state = SubState.CARD_MOVING
+		table_backend.dealer.dealer_script.set_initial_button(table_backend.seat_assignments)
+	elif state_in_state == 3:
+		print("State_in_State.set_dealer")
+		sub_state = SubState.DEALER_BUTTON_MOVING
+		table_backend.dealer.dealer_script.hand_clear(table_backend.seat_assignments)
+
+func process_DEALER_SET():
+	print("State.DEALER_SET")
+	# デッキのリセット
+	for child in table_backend.dealer.dealer_script.get_children():
+		# 子ノードに接続されているシグナルを解除
+		for signal_name in child.get_signal_list():
+			if child.is_connected(signal_name["name"], Callable(self, "_signal_handler")):
+				child.disconnect(signal_name["name"], Callable(self, "_signal_handler"))
+
+		# 子ノードを削除
+		table_backend.dealer.dealer_script.remove_child(child)
+		child.queue_free()
+
+	table_backend.dealer.dealer_script.deck = DeckBackend.new(seeing)
+	table_backend.dealer.dealer_script.deck.name = "DeckBackend"
+	table_backend.dealer.dealer_script.add_child(table_backend.dealer.dealer_script.deck)
+	table_backend.dealer.dealer_script.time_manager = TimeManager.new()
+
+	next_state()
+
+func process_PAYING_SB_BB():
+	print("State.PAYING_SB_BB")
+	sub_state = SubState.CHIP_BETTING
+	var sb_seat = table_backend.dealer.dealer_script.get_dealer_button_index(table_backend.seat_assignments, 1)
+	var sb_player = table_backend.seat_assignments[sb_seat]
+	sb_player.player_script.bet(sb)
+	if seeing:
+		sb_player.front.set_chips(sb_player.player_script.chips)
+		var chip_instance = load("res://scenes/gamecomponents/Chip.tscn")
+		var chip = chip_instance.instantiate()
+		chip.set_chip_sprite(false)
+		chip.set_bet_value(sb)
+		chip.connect("moving_finished", Callable(self, "_on_moving_finished"))
+		chip.connect("moving_finished_queue_free", Callable(self, "_on_moving_finished_queue_free").bind(chip))
+		chip.set_position(-1 * animation_place[sb_seat]["Bet"].get_position())
+		animation_place[sb_seat]["Bet"].add_child(chip)
+		chip.move_to(Vector2(0, 0), 1.0)
+	else:
+		sb_player.player_script.time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
+	table_backend.dealer.dealer_script.bet_record.append(sb)
+	_on_n_moving_plus()
+
+	var bb_seat = table_backend.dealer.dealer_script.get_dealer_button_index(table_backend.seat_assignments, 2)
+	var bb_player = table_backend.seat_assignments[bb_seat]
+	bb_player.player_script.bet(bb)
+	if seeing:
+		bb_player.front.set_chips(bb_player.player_script.chips)
+		var chip_instance = load("res://scenes/gamecomponents/Chip.tscn")
+		var chip = chip_instance.instantiate()
+
+		chip.set_chip_sprite(false)
+		chip.set_bet_value(bb)
+		chip.connect("moving_finished", Callable(self, "_on_moving_finished"))
+		chip.connect("moving_finished_queue_free", Callable(self, "_on_moving_finished_queue_free").bind(chip))
+		chip.set_position(-1 * animation_place[bb_seat]["Bet"].get_position())
+		animation_place[bb_seat]["Bet"].add_child(chip)
+		chip.move_to(Vector2(0, 0), 1.0)
+	else:
+		bb_player.player_script.time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
+	table_backend.dealer.dealer_script.bet_record.append(bb)
+	_on_n_moving_plus()
+
+func process_SB_BB_PAID():
+	print("State.SB_BB_PAID")
+	next_state()
+
+func process_DEALING_CARD():
+	print("State.DEALING_CARD")
+	sub_state = SubState.CARD_MOVING
+	if state_in_state == 0:
+		print("State_in_State.burn_card")
+		table_backend.dealer.dealer_script.burn_card("PreFlop")
+	elif state_in_state == 1:
+		print("State_in_State.deal_card_one")
+		table_backend.dealer.dealer_script.deal_hole_cards(table_backend.seat_assignments, "Hand1")
+	elif state_in_state == 2:
+		print("State_in_State.deal_card_two")
+		table_backend.dealer.dealer_script.deal_hole_cards(table_backend.seat_assignments, "Hand2")
+
+func process_DEALED_CARD():
+	print("State.DEALED_CARD")
+	seats = table_backend.seat_assignments.keys()
+	start_index = (seats.find(table_backend.dealer.dealer_script.get_dealer_button_index(table_backend.seat_assignments, 3))) % seats.size()
+	current_action = 0
+	n_active_players = 0
+	for seat in seats:
+		var player = table_backend.seat_assignments[seat]
+		if player != null and player.player_script != null:
+			n_active_players += 1
+			player.player_script.has_acted = false
+	next_state()
+
+func process_ACTION():
+	if state == State.PRE_FLOP_ACTION:
+		print("State.PRE_FLOP_ACTION")
+	elif state == State.FLOP_ACTION:
+		print("State.FLOP_ACTION")
+	elif state == State.TURN_ACTION:
+		print("State.TURN_ACTION")
+	else:
+		print("State.RIVER_ACTION")
+
+	bet_state()
+
+func process_ACTION_END():
+	if state == State.PRE_FLOP_ACTION_END:
+		print("State.PRE_FLOP_ACTION_END")
+	elif state == State.FLOP_ACTION_END:
+		print("State.FLOP_ACTION_END")
+	elif state == State.TURN_ACTION_END:
+		print("State.TURN_ACTION_END")
+	else:
+		print("State.RIVER_ACTION_END")
+
+	if state_in_state == 0:
+		print("State_in_State.pot_collect")
+		sub_state = SubState.CHIPS_COLLECTING
+		# まずベットされたものをポットとして集める
+		var pot_value = table_backend.dealer.dealer_script.pot_collect(table_backend.seat_assignments)
+		table_backend.dealer.dealer_script.bet_record = [0]
+		if pot_value == 0:
+			sub_state = SubState.READY
+			state_in_state = 1
+	elif state_in_state == 1:
+		print("State_in_State.active_players_check")
+		sub_state = SubState.CHIPS_COLLECTING
+		for seat in seats:
+			var player = table_backend.seat_assignments[seat]
+			if player != null:
+				if not player.player_script.is_folded:
+					active_players.append(player)
+		time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
+		_on_n_moving_plus()
+	elif state_in_state == 2:
+		print("State_in_State.burn_card")
+		sub_state = SubState.CARD_MOVING
+		if state == State.PRE_FLOP_ACTION_END:
+			table_backend.dealer.dealer_script.burn_card("Flop")
+		elif state == State.FLOP_ACTION_END:
+			table_backend.dealer.dealer_script.burn_card("Turn")
+		elif state == State.TURN_ACTION_END:
+			table_backend.dealer.dealer_script.burn_card("River")
+		else:
+			_on_n_moving_plus()
+			_on_moving_finished()
+	elif state_in_state == 3:
+		print("State_in_State.reveal_community_cards")
+		sub_state = SubState.CARD_MOVING
+		# コミュニティカードを3枚開く
+		var community_card_place = []
+		if state == State.PRE_FLOP_ACTION_END:
+			community_card_place = ["Flop1", "Flop2", "Flop3"]
+		elif state == State.FLOP_ACTION_END:
+			community_card_place = ["Turn"]
+		elif state == State.TURN_ACTION_END:
+			community_card_place = ["River"]
+
+		if state != State.RIVER_ACTION_END:
+			table_backend.dealer.dealer_script.reveal_community_cards(community_card_place)
+
+			current_action = 0
+			n_active_players = 0
+			for seat in seats:
+				var player = table_backend.seat_assignments[seat]
+				if player != null and not player.player_script.is_folded and not player.player_script.is_all_in:
+					n_active_players += 1
+					player.player_script.has_acted = false
+					player.player_script.last_action.clear()
+		else:
+			_on_n_moving_plus()
+			_on_moving_finished()
+
+	elif state_in_state == 4:
+		# ステートを一気にポット分配まで飛ばす
+		print("State_in_State.JUMP_TO_DISTRIBUTIONING_POTS")
+		state_in_state = 0
+		sub_state = SubState.READY
+		state = State.DISTRIBUTIONING_POTS
+
+func process_SHOW_DOWN():
+	print("State.SHOW_DOWN")
+	if state_in_state == 0:
+		print("State_inState:CARD_OPENING")
+		sub_state = SubState.CARD_OPENING
+		# カードオープン
+		time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
+		_on_n_moving_plus()
+	elif state_in_state == 1:
+		print("State_inState:evaluate_hand")
+		# 手の強さ判定
+		sub_state = SubState.CARD_OPENING
+		active_players = table_backend.dealer.dealer_script.evaluate_hand(table_backend.seat_assignments)
+		time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
+		_on_n_moving_plus()
+
+func process_SHOW_DOWN_END():
+	print("State.SHOW_DOWN_END")
+	next_state()
+
+func process_DISTRIBUTIONING_POTS():
+	print("State.DISTRIBUTIONING_POTS")
+	sub_state = SubState.POTS_COLLECTING
+	table_backend.dealer.dealer_script.distribute_pots(active_players, table_backend.seat_assignments)
+
+func process_DISTRIBUTIONED_POTS():
+	print("State.DISTRIBUTIONED_POTS")
+	next_state()
+
+func process_ROUND_RESETTING():
+	print("State.ROUND_RESETTING")
+	sub_state = SubState.CARD_MOVING
+	table_backend.dealer.dealer_script.reset_round(table_backend.seat_assignments, buy_in)
+
+func process_ROUND_RESETED():
+	print("State.ROUND_RESETED")
+	next_state()
+
+func process_NEXT_DEALER_BUTTON():
+	print("State.NEXT_DEALER_BUTTON")
+	sub_state = SubState.DEALER_BUTTON_MOVING
+	table_backend.dealer.dealer_script.move_dealer_button(table_backend.seat_assignments)
+
+func process_MOVED_DEALER_BUTTON():
+	print("State.MOVED_DEALER_BUTTON")
+	next_state()
+
 func _process(_delta):
 	if sub_state != SubState.READY:
 		# print(n_moving)
 		# print("SubState:" + str(sub_state))
 		return
 
-	match state:
-		State.INIT:
-			print("State.INIT")
-			table_backend = TableBackend.new(self, bet_size, buy_in, dealer_name, selected_cpus, table_place, animation_place, seeing)
-			table_backend.connect("n_moving_plus", Callable(self, "_on_n_moving_plus"))
-			table_backend.dealer.dealer_script.connect("n_moving_plus", Callable(self, "_on_n_moving_plus"))
-			table_backend.name = "TableBackend"
-			add_child(table_backend)
-			next_state()
-		State.SEATING_PLAYER:
-			print("State.SEATING_PLAYER")
-			sub_state = SubState.PLAYER_INPUT
-			table_backend.seat_player()
-		State.SEATING_DEALER:
-			print("State.SEATING_DEALER")
-			sub_state = SubState.PARTICIPANT_MOVING
-			table_backend.seat_dealer()
-		State.SEATING_CPUS:
-			print("State.SEATING_CPUS")
-			sub_state = SubState.PARTICIPANT_MOVING
-			table_backend.seat_cpus()
-		State.SEATING_COMPLETED:
-			print("State.SEATING_COMPLETED")
-			next_state()
-		State.SETTING_DEALER_BUTTON:
-			print("State.SETTING_DEALER_BUTTON")
-			if state_in_state == 0:
-				print("State_in_State.burn_card")
-				sub_state = SubState.CARD_MOVING
-				table_backend.dealer.dealer_script.burn_card("SetInitialDealer")
-			elif state_in_state == 1:
-				print("State_in_State.deal_card")
-				sub_state = SubState.CARD_MOVING
-				table_backend.dealer.dealer_script.deal_card(table_backend.seat_assignments)
-			elif state_in_state == 2:
-				print("State_in_State.set_initial_button")
-				sub_state = SubState.CARD_MOVING
-				table_backend.dealer.dealer_script.set_initial_button(table_backend.seat_assignments)
-			elif state_in_state == 3:
-				print("State_in_State.set_dealer")
-				sub_state = SubState.DEALER_BUTTON_MOVING
-				table_backend.dealer.dealer_script.hand_clear(table_backend.seat_assignments)
-		State.DEALER_SET:
-			print("State.DEALER_SET")
-
-			# デッキのリセット
-			for child in table_backend.dealer.dealer_script.get_children():
-				# 子ノードに接続されているシグナルを解除
-				for signal_name in child.get_signal_list():
-					if child.is_connected(signal_name["name"], Callable(self, "_signal_handler")):
-						child.disconnect(signal_name["name"], Callable(self, "_signal_handler"))
-
-				# 子ノードを削除
-				table_backend.dealer.dealer_script.remove_child(child)
-				child.queue_free()
-
-			table_backend.dealer.dealer_script.deck = DeckBackend.new(seeing)
-			table_backend.dealer.dealer_script.deck.name = "DeckBackend"
-			table_backend.dealer.dealer_script.add_child(table_backend.dealer.dealer_script.deck)
-			table_backend.dealer.dealer_script.time_manager = TimeManager.new()
-
-			next_state()
-		State.PAYING_SB_BB:
-			print("State.PAYING_SB_BB")
-			sub_state = SubState.CHIP_BETTING
-			var sb_seat = table_backend.dealer.dealer_script.get_dealer_button_index(table_backend.seat_assignments, 1)
-			var sb_player = table_backend.seat_assignments[sb_seat]
-			sb_player.player_script.bet(sb)
-			if seeing:
-				sb_player.front.set_chips(sb_player.player_script.chips)
-				var chip_instance = load("res://scenes/gamecomponents/Chip.tscn")
-				var chip = chip_instance.instantiate()
-				chip.set_chip_sprite(false)
-				chip.set_bet_value(sb)
-				chip.connect("moving_finished", Callable(self, "_on_moving_finished"))
-				chip.connect("moving_finished_queue_free", Callable(self, "_on_moving_finished_queue_free").bind(chip))
-				chip.set_position(-1 * animation_place[sb_seat]["Bet"].get_position())
-				animation_place[sb_seat]["Bet"].add_child(chip)
-				chip.move_to(Vector2(0, 0), 1.0)
-			else:
-				sb_player.player_script.time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
-			table_backend.dealer.dealer_script.bet_record.append(sb)
-			_on_n_moving_plus()
-
-			var bb_seat = table_backend.dealer.dealer_script.get_dealer_button_index(table_backend.seat_assignments, 2)
-			var bb_player = table_backend.seat_assignments[bb_seat]
-			bb_player.player_script.bet(bb)
-			if seeing:
-				bb_player.front.set_chips(bb_player.player_script.chips)
-				var chip_instance = load("res://scenes/gamecomponents/Chip.tscn")
-				var chip = chip_instance.instantiate()
-
-				chip.set_chip_sprite(false)
-				chip.set_bet_value(bb)
-				chip.connect("moving_finished", Callable(self, "_on_moving_finished"))
-				chip.connect("moving_finished_queue_free", Callable(self, "_on_moving_finished_queue_free").bind(chip))
-				chip.set_position(-1 * animation_place[bb_seat]["Bet"].get_position())
-				animation_place[bb_seat]["Bet"].add_child(chip)
-				chip.move_to(Vector2(0, 0), 1.0)
-			else:
-				bb_player.player_script.time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
-			table_backend.dealer.dealer_script.bet_record.append(bb)
-			_on_n_moving_plus()
-
-		State.SB_BB_PAID:
-			print("State.SB_BB_PAID")
-			next_state()
-		State.DEALING_CARD:
-			print("State.DEALING_CARD")
-			sub_state = SubState.CARD_MOVING
-			if state_in_state == 0:
-				print("State_in_State.burn_card")
-				table_backend.dealer.dealer_script.burn_card("PreFlop")
-			elif state_in_state == 1:
-				print("State_in_State.deal_card_one")
-				table_backend.dealer.dealer_script.deal_hole_cards(table_backend.seat_assignments, "Hand1")
-			elif state_in_state == 2:
-				print("State_in_State.deal_card_two")
-				table_backend.dealer.dealer_script.deal_hole_cards(table_backend.seat_assignments, "Hand2")
-		State.DEALED_CARD:
-			print("State.DEALED_CARD")
-			seats = table_backend.seat_assignments.keys()
-			start_index = (seats.find(table_backend.dealer.dealer_script.get_dealer_button_index(table_backend.seat_assignments, 3))) % seats.size()
-			current_action = 0
-			n_active_players = 0
-			for seat in seats:
-				var player = table_backend.seat_assignments[seat]
-				if player != null and player.player_script != null:
-					n_active_players += 1
-					player.player_script.has_acted = false
-			next_state()
-		State.PRE_FLOP_ACTION:
-			print("State.PRE_FLOP_ACTION")
-			bet_state()
-		State.PRE_FLOP_ACTION_END:
-			print("State.PRE_FLOP_ACITON_END")
-			if state_in_state == 0:
-				print("State_in_State.pot_collect")
-				sub_state = SubState.CHIPS_COLLECTING
-				# まずベットされたものをポットとして集める
-				var pot_value = table_backend.dealer.dealer_script.pot_collect(table_backend.seat_assignments)
-				table_backend.dealer.dealer_script.bet_record = [0]
-				if pot_value == 0:
-					sub_state = SubState.READY
-					state_in_state = 1
-			elif state_in_state == 1:
-				print("State_in_State.active_players_check")
-				sub_state = SubState.CHIPS_COLLECTING
-				for seat in seats:
-					var player = table_backend.seat_assignments[seat]
-					if player != null:
-						if not player.player_script.is_folded:
-							active_players.append(player)
-				time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
-				_on_n_moving_plus()
-			elif state_in_state == 2:
-				print("State_in_State.burn_card")
-				sub_state = SubState.CARD_MOVING
-				table_backend.dealer.dealer_script.burn_card("Flop")
-			elif state_in_state == 3:
-				print("State_in_State.reveal_community_cards")
-				sub_state = SubState.CARD_MOVING
-				# コミュニティカードを3枚開く
-				table_backend.dealer.dealer_script.reveal_community_cards(["Flop1", "Flop2", "Flop3"])
-
-				current_action = 0
-				n_active_players = 0
-				for seat in seats:
-					var player = table_backend.seat_assignments[seat]
-					if player != null and not player.player_script.is_folded and not player.player_script.is_all_in:
-						n_active_players += 1
-						player.player_script.has_acted = false
-						player.player_script.last_action.clear()
-
-			elif state_in_state == 4:
-				# ステートを一気にポット分配まで飛ばす
-				print("State_in_State.JUMP_TO_DISTRIBUTIONING_POTS")
-				state_in_state = 0
-				sub_state = SubState.READY
-				state = State.DISTRIBUTIONING_POTS
-		State.FLOP_ACTION:
-			print("State.FLOP_ACTION")
-			bet_state()
-		State.FLOP_ACTION_END:
-			print("State.FLOP_ACTION_END")
-			if state_in_state == 0:
-				print("State_in_State.pot_collect")
-				sub_state = SubState.CHIPS_COLLECTING
-				# まずベットされたものをポットとして集める
-				var pot_value = table_backend.dealer.dealer_script.pot_collect(table_backend.seat_assignments)
-				table_backend.dealer.dealer_script.bet_record = [0]
-				if pot_value == 0:
-					sub_state = SubState.READY
-					state_in_state = 1
-			elif state_in_state == 1:
-				print("State_in_State.active_players_check")
-				sub_state = SubState.CHIPS_COLLECTING
-				active_players = []
-				for seat in seats:
-					var player = table_backend.seat_assignments[seat]
-					if player != null:
-						if not player.player_script.is_folded:
-							active_players.append(player)
-				time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
-				_on_n_moving_plus()
-			elif state_in_state == 2:
-				print("State_in_State.burn_card")
-				sub_state = SubState.CARD_MOVING
-				table_backend.dealer.dealer_script.burn_card("Turn")
-			elif state_in_state == 3:
-				print("State_in_State.reveal_community_cards")
-				sub_state = SubState.CARD_MOVING
-				# コミュニティカードを3枚開く
-				table_backend.dealer.dealer_script.reveal_community_cards(["Turn"])
-
-				current_action = 0
-				n_active_players = 0
-				for seat in seats:
-					var player = table_backend.seat_assignments[seat]
-					if player != null and player.player_script != null and not player.player_script.is_folded and not player.player_script.is_all_in:
-						n_active_players += 1
-						player.player_script.has_acted = false
-						player.player_script.last_action.clear()
-
-			elif state_in_state == 4:
-				# ステートを一気にポット分配まで飛ばす
-				print("State_in_State.JUMP_TO_DISTRIBUTIONING_POTS")
-				state_in_state = 0
-				sub_state = SubState.READY
-				state = State.DISTRIBUTIONING_POTS
-		State.TURN_ACTION:
-			print("State.TURN_ACTION")
-			bet_state()
-		State.TURN_ACTION_END:
-			print("State.TURN_ACTION_END")
-			if state_in_state == 0:
-				print("State_in_State.pot_collect")
-				sub_state = SubState.CHIPS_COLLECTING
-				# まずベットされたものをポットとして集める
-				var pot_value = table_backend.dealer.dealer_script.pot_collect(table_backend.seat_assignments)
-				table_backend.dealer.dealer_script.bet_record = [0]
-				if pot_value == 0:
-					sub_state = SubState.READY
-					state_in_state = 1
-			elif state_in_state == 1:
-				print("State_in_State.active_players_check")
-				sub_state = SubState.CHIPS_COLLECTING
-				active_players = []
-				for seat in seats:
-					var player = table_backend.seat_assignments[seat]
-					if player != null:
-						if not player.player_script.is_folded:
-							active_players.append(player)
-				time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
-				_on_n_moving_plus()
-			elif state_in_state == 2:
-				print("State_in_State.burn_card")
-				sub_state = SubState.CARD_MOVING
-				table_backend.dealer.dealer_script.burn_card("River")
-			elif state_in_state == 3:
-				print("State_in_State.reveal_community_cards")
-				sub_state = SubState.CARD_MOVING
-				# コミュニティカードを3枚開く
-				table_backend.dealer.dealer_script.reveal_community_cards(["River"])
-
-				current_action = 0
-				n_active_players = 0
-				for seat in seats:
-					var player = table_backend.seat_assignments[seat]
-					if player != null and player.player_script != null and not player.player_script.is_folded and not player.player_script.is_all_in:
-						n_active_players += 1
-						player.player_script.has_acted = false
-						player.player_script.last_action.clear()
-
-			elif state_in_state == 4:
-				# ステートを一気にポット分配まで飛ばす
-				print("State_in_State.JUMP_TO_DISTRIBUTIONING_POTS")
-				state_in_state = 0
-				sub_state = SubState.READY
-				state = State.DISTRIBUTIONING_POTS
-		State.RIVER_ACTION:
-			print("State.RIVER_ACTION")
-			bet_state()
-		State.RIVER_ACTION_END:
-			print("State.RIVER_ACTION_END")
-			if state_in_state == 0:
-				print("State_in_State.pot_collect")
-				sub_state = SubState.CHIPS_COLLECTING
-				# まずベットされたものをポットとして集める
-				var pot_value = table_backend.dealer.dealer_script.pot_collect(table_backend.seat_assignments)
-				table_backend.dealer.dealer_script.bet_record = [0]
-				if pot_value == 0:
-					sub_state = SubState.READY
-					state_in_state = 1
-			elif state_in_state == 1:
-				print("State_in_State.active_players_check")
-				sub_state = SubState.CHIPS_COLLECTING
-				active_players = []
-				for seat in seats:
-					var player = table_backend.seat_assignments[seat]
-					if player != null:
-						if not player.player_script.is_folded:
-							active_players.append(player)
-				time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
-				_on_n_moving_plus()
-			elif state_in_state == 2:
-				print("State_in_State.burn_card")
-				_on_n_moving_plus()
-				_on_moving_finished()
-				# sub_state = SubState.CARD_MOVING
-				# table_backend.dealer.dealer_script.burn_card()
-			elif state_in_state == 3:
-				print("State_in_State.reveal_community_cards")
-				_on_n_moving_plus()
-				_on_moving_finished()
-				# sub_state = SubState.CARD_MOVING
-				# # コミュニティカードを3枚開く
-				# table_backend.dealer.dealer_script.reveal_community_cards(["River"])
-
-				# current_action = 0
-				# for seat in seats:
-				# 	var player = table_backend.seat_assignments[seat]
-				# 	if player != null and player.player_script != null and not player.player_script.is_folded and not player.player_script.is_all_in:
-				# 		n_active_players += 1
-
-			elif state_in_state == 4:
-				# ステートを一気にポット分配まで飛ばす
-				print("State_in_State.JUMP_TO_DISTRIBUTIONING_POTS")
-				state_in_state = 0
-				sub_state = SubState.READY
-				state = State.DISTRIBUTIONING_POTS
-		State.SHOW_DOWN:
-			print("State.SHOW_DOWN")
-			if state_in_state == 0:
-				print("State_inState:CARD_OPENING")
-				sub_state = SubState.CARD_OPENING
-				# カードオープン
-				time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
-				_on_n_moving_plus()
-			elif state_in_state == 1:
-				print("State_inState:evaluate_hand")
-				# 手の強さ判定
-				sub_state = SubState.CARD_OPENING
-				active_players = table_backend.dealer.dealer_script.evaluate_hand(table_backend.seat_assignments)
-				time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
-				_on_n_moving_plus()
-		State.SHOW_DOWN_END:
-			print("State.SHOW_DOWN_END")
-			next_state()
-		State.DISTRIBUTIONING_POTS:
-			print("State.DISTRIBUTIONING_POTS")
-			sub_state = SubState.POTS_COLLECTING
-			table_backend.dealer.dealer_script.distribute_pots(active_players, table_backend.seat_assignments)
-		State.DISTRIBUTIONED_POTS:
-			print("State.DISTRIBUTIONED_POTS")
-			next_state()
-		State.ROUND_RESETTING:
-			print("State.ROUND_RESETTING")
-			sub_state = SubState.CARD_MOVING
-			table_backend.dealer.dealer_script.reset_round(table_backend.seat_assignments, buy_in)
-		State.ROUND_RESETED:
-			print("State.ROUND_RESETED")
-			next_state()
-		State.NEXT_DEALER_BUTTON:
-			print("State.NEXT_DEALER_BUTTON")
-			sub_state = SubState.DEALER_BUTTON_MOVING
-			table_backend.dealer.dealer_script.move_dealer_button(table_backend.seat_assignments)
-		State.MOVED_DEALER_BUTTON:
-			print("State.MOVED_DEALER_BUTTON")
-			next_state()
+	# State に対応する関数を呼び出す
+	if state_function_map.has(state):
+		state_function_map[state].call()
+	else:
+		print("⚠️ 未対応のState:", state)
 
 func on_player_seated(seat_node):
 	print("Player seated at:", seat_node.name)
