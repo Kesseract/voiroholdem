@@ -63,7 +63,6 @@ const CHARACTERS = {
 
 # キャラクターのテクスチャファイルパス
 const PATH = "res://assets/textures/Characters/"
-
 const CHARACTER_TEXTURE_PATHS = {
     "player": {
         "left": PATH + "test/left.png",
@@ -213,6 +212,35 @@ const WINDOW_SIZES = [
     "1024x576",
     "1280x720"
 ]
+
+
+# 役定義
+const HandCategory = {
+    HIGH_CARD = ["ハイカード", 1],
+    ONE_PAIR = ["ワンペア", 2],
+    TWO_PAIR = ["ツーペア", 3],
+    THREE_OF_A_KIND = ["スリーカード", 4],
+    STRAIGHT = ["ストレート", 5],
+    FLUSH = ["フラッシュ", 6],
+    FULL_HOUSE = ["フルハウス", 7],
+    FOUR_OF_A_KIND = ["フォーカード", 8],
+    STRAIGHT_FLUSH = ["ストレートフラッシュ", 9],
+    ROYAL_FLUSH = ["ロイヤルフラッシュ", 10]
+}
+
+
+# ランク定義 (2〜10, J, Q, K, A)
+const RANKS = {
+    "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9, "10": 10,
+    "J": 11, "Q": 12, "K": 13, "A": 14
+}
+
+
+# スート定義 (♣︎ < ♦︎ < ♥︎ < ♠︎)
+const SUITS = {
+    "♣︎": 1, "♦︎": 2, "♥︎": 3, "♠︎": 4
+}
+
 
 func _ready():
     # ここでJSONファイルを読み込むようにすると、ユーザーが任意で値を切り替えられるようになる

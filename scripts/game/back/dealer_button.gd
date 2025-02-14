@@ -26,7 +26,7 @@ func _init(_seeing: bool) -> void:
     # 時間管理クラス作成
     time_manager = TimeManager.new()
 
-    # カードの見た目作成
+    # 見た目作成
     if seeing:
         var front_instance = load("res://scenes/gamecomponents/DealerButton.tscn")
         front = front_instance.instantiate()

@@ -41,10 +41,13 @@ func generate_deck() -> void:
         for rank in ranks:
             # Cardシーンをインスタンス化してプロパティを設定
             var card_instance = CardBackend.new(rank, suit, seeing)
+
             # インスタンス化したカードをデッキに追加
             cards.append(card_instance)
+
             # ノードの名前をランクとスートの結合文字列に設定
             card_instance.name = card_instance.to_str()
+
             # ノードを追加
             add_child(card_instance)
 

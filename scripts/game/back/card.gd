@@ -34,7 +34,7 @@ func _init(_rank: String, _suit: String, _seeing: bool) -> void:
     # 時間管理クラス作成
     time_manager = TimeManager.new()
 
-    # カードの見た目作成
+    # 見た目作成
     if seeing:
         var front_instance = load("res://scenes/gamecomponents/Card.tscn")
         front = front_instance.instantiate()
@@ -51,7 +51,7 @@ func _ready() -> void:
 
 
 func to_str() -> String:
-    """文字列表示関数
+    """属性表示関数
     Args:
     Returns:
         str(rank) + str(suit) String: カードのランクとスートをつなげた文字列
