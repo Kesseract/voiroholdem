@@ -6,14 +6,14 @@ class_name DealerBackend
 
 # 属性
 var deck
-var pots: Array = []
-var bet_record: Array = []
-var community_cards: Array = []
-var burn_cards: Array = []
-var hand_evaluator
-var game_process
-var animation_place
-var table_place
+var pots: Array[PotBackend] = []
+var bet_record: Array[int] = []
+var community_cards: Array[CardBackend] = []
+var burn_cards: Array[CardBackend] = []
+var game_process: GameProcessBackend
+var hand_evaluator: HandEvaluatorBackend
+var animation_place: Dictionary
+var table_place: Dictionary
 
 # 表示フラグ、表示インスタンス
 var seeing: bool
@@ -349,7 +349,7 @@ func deal_hole_cards(seat_assignments: Dictionary, hand: String) -> void:
 
 
 func distribute_single_card(
-    seats: Array[String],
+    seats: PackedStringArray,
     start_position: int,
     seat_assignments: Dictionary,
     base_delay: float,
@@ -359,7 +359,7 @@ func distribute_single_card(
 ) -> int:
     """各プレイヤーに1枚のカードを配る関数
     Args:
-        seats Array[String]: 座席リスト
+        seats PackedStringArray: 座席リスト
         start_position int: カードを配り始めるポジション
         seat_assignments Dictionary: 座席情報
         base_delay float: 次プレイヤーの待機時間
@@ -409,15 +409,15 @@ func distribute_single_card(
     return delay
 
 
-func set_action_list(player: ParticipantBackend, current_max_bet: int, seats: Array[String], seat_assignments: Dictionary) -> Array[String]:
+func set_action_list(player: ParticipantBackend, current_max_bet: int, seats: PackedStringArray, seat_assignments: Dictionary) -> PackedStringArray:
     """アクションリストを作成する関数
     Args:
         player ParticipantBackend: アクションリストを作成するプレイヤー
         current_max_bet int: 最大掛け金
-        seats Array[String]: 席順
+        seats PackedStringArray: 席順
         seat_assignments Dictionary: 座席情報
     Returns:
-        action_list Array[String]: アクションリスト
+        action_list PackedStringArray: アクションリスト
     """
     # アクションリストを保持する配列
     var action_list = []
@@ -428,7 +428,7 @@ func set_action_list(player: ParticipantBackend, current_max_bet: int, seats: Ar
         action_list.append("fold")
 
     # 誰かが賭けているなら
-    if bet_record.size() >= 1:
+    if bet_record.size() >= 2:
         # 最大掛け金 - すでに自分が賭けている金額が自分の所持チップより少ない場合
         if player.player_script.chips <= current_max_bet - player.player_script.current_bet:
             # オールインが許可される
@@ -660,10 +660,10 @@ func set_bet(amount, player, current_seat) -> void:
         player.player_script.time_manager.wait_to(0.5, Callable(game_process, "_on_moving_finished"))
 
 
-func bet_round(seats: Array[String], start_index: int, seat_assignments: Dictionary, bb_value: int, current_action: int) -> String:
+func bet_round(seats: PackedStringArray, start_index: int, seat_assignments: Dictionary, bb_value: int, current_action: int) -> String:
     """ベットラウンドのアクションを処理する関数
     Args:
-        seats Array[String]: 座席
+        seats PackedStringArray: 座席
         start_index int: 開始位置
         seat_assignments: 座席情報
         bb_value: BBの金額
@@ -863,10 +863,10 @@ func pot_collect(seat_assignments: Dictionary) -> int:
     return total_chips
 
 
-func reveal_community_cards(num_cards: Array[String]) -> Array[CardBackend]:
+func reveal_community_cards(num_cards: Array) -> Array[CardBackend]:
     """指定された枚数のコミュニティカードを公開する関数
     Args:
-        num_cards Arra[String]: どこに配置するかの配列
+        num_cards Array: どこに配置するかの配列
     Returns:
         community_cards Array[CardBackend]: コミュニティカードの配列
     """
@@ -927,7 +927,7 @@ func evaluate_hand(seat_assignments: Dictionary) -> Array[ParticipantBackend]:
         active_players Array[ParticipantBackend]: 手の強さ順に並べたプレイヤーリスト
     """
     # フォールドしていないプレイヤーを取得
-    var active_players = []
+    var active_players: Array[ParticipantBackend] = []
     for seat in seat_assignments.keys():
         var player = seat_assignments[seat]
         if player != null and not player.player_script.is_folded:
@@ -1092,14 +1092,14 @@ func reset_round(seat_assignments: Dictionary, buy_in: int) -> void:
     for seat in seat_assignments.keys():
         var player = seat_assignments[seat]
         if player != null:
-            player.player_script.hand = []
+            player.player_script.hand.clear()
             player.player_script.current_bet = 0  # 現在のベット額
-            player.player_script.last_action = []  # 最後のアクションを保存する属性
+            player.player_script.last_action.clear()  # 最後のアクションを保存する属性
             player.player_script.has_acted = false
             player.player_script.is_folded = false  # プレイヤーがフォールドしたかどうかを示すフラグ
             player.player_script.is_all_in = false
-            player.player_script.hand_category = null
-            player.player_script.hand_rank = null
+            player.player_script.hand_category = []
+            player.player_script.hand_rank = []
             # a. いったんここでchipsが0なら100に戻すように設定
             if player.player_script.chips == 0:
                 player.player_script.chips = buy_in
@@ -1120,8 +1120,8 @@ func reset_round(seat_assignments: Dictionary, buy_in: int) -> void:
             card_front.time_manager.move_to(card_front, burn_card_place, 0.5, Callable(game_process, "_on_moving_finished_queue_free").bind(card_front))
             n_moving_plus.emit()
 
-    community_cards = []
-    burn_cards = []
+    community_cards.clear()
+    burn_cards.clear()
 
     # 3. ポットのリセット
     pots.clear()
@@ -1215,6 +1215,6 @@ func to_str() -> String:
             burn_card_strings.append(card.to_str())
         result += "バーンカード: " + ", ".join(burn_card_strings) + "\n"
     else:
-        result += "コミュニティカード: なし\n"
+        result += "バーンカード: なし\n"
     result += "=======================\n"
     return result

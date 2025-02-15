@@ -1,17 +1,18 @@
+# ノード
 extends Node2D
 
-# signal opening_finished
-# signal closing_finished
+# ランク、スート
+var rank: Label
+var suit: Label
 
-var backend
-var front
-var rank
-var suit
-var back
+# バックエンド
+var backend: CardBackend
 
-var time_manager
+# 時間管理クラス
+var time_manager: TimeManager
 
-enum {        # state
+# state
+enum {
     STATE_NONE = 0,
     OPENING_FH,            # オープン中 前半
     OPENING_SH,            # オープン中 後半
@@ -19,21 +20,64 @@ enum {        # state
     CLOSING_SH,            # オープン中 後半
 }
 
+# 回転スケール
 const TH_SCALE = 1.5
 
-func _init():
+# 信号
+# signal opening_finished
+# signal closing_finished
+
+
+func _init() -> void:
+    """初期化関数
+    Args:
+    Returns:
+        void
+    """
+    # 時間管理クラス作成
     time_manager = TimeManager.new()
 
-func _ready():
+
+func _ready() -> void:
+    """シーンがノードに追加されたときに呼ばれる関数
+    Args:
+    Returns:
+        void
+    """
+    # 時間管理クラスをノードに追加する
     add_child(time_manager)
 
-func set_rank(value):
+
+func set_rank(value: String) -> void:
+    """ランクセット関数
+    Args:
+        value String: 表示させたいランク
+    Returns:
+        void
+    """
+    # テキストに引数をセット
     rank.text = value
 
-func set_suit(value):
+
+func set_suit(value: String) -> void:
+    """スートセット関数
+    Args:
+        value String: 表示させたいスート
+    Returns:
+        void
+    """
+    # テキストに引数をセット
     suit.text = value
 
-func set_backend(_backend):
+
+func set_backend(_backend: CardBackend) -> void:
+    """バックエンドセット関数
+    Args:
+        _backend CardBackend: カードバックエンド
+    Returns:
+        void
+    """
+    # 属性に引数をセット
     backend = _backend
 
     # Front内の子ノードを取得して設定
@@ -44,27 +88,54 @@ func set_backend(_backend):
         elif child.name == "Suit":
             suit = child
 
+    # バックエンドの値と同期させる
     set_rank(backend.rank)
     set_suit(backend.suit)
 
-func set_visible_node(flg: bool):
+
+func set_visible_node(flg: bool) -> void:
+    """表裏表示切替関数
+    Args:
+        flg bool: True の場合、表面を表示する
+                    False の場合、裏面を表示する
+    Returns:
+        void
+    """
+    # 表面ノード、裏面ノードを取得
     var front_node = get_node("Front")
     var back_node = get_node("Back")
 
+    # フラグによって分岐
     if flg:
-        # 見える
+        # カードの表面表示
         front_node.visible = true
         back_node.visible = false
     else:
-        # 見えない
+        # カードの裏面表示
         front_node.visible = false
         back_node.visible = true
 
-func show_front():
-    #print("show_front()")
+
+func show_front() -> void:
+    """表面にする関数
+    Args:
+    Returns:
+        void
+    """
+    # 表面表示に切り替える
     set_visible_node(true)
-func show_back():
+
+
+func show_back() -> void:
+    """裏面にする関数
+    Args:
+    Returns:
+        void
+    """
+    # 表面表示に切り替える
     set_visible_node(false)
+
+# カードを回転させる必要があったらこれを使う
 # func do_open():
 #     state = OPENING_FH
 #     theta = 0.0

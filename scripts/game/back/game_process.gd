@@ -65,7 +65,7 @@ var table_backend: TableBackend
 var dealer: DealerBackend
 var n_moving: int = 0
 var initial_dealer: ParticipantBackend
-var seats: Array[String]
+var seats: PackedStringArray
 var start_index: int
 var current_action: int
 var n_active_players: int = 0
@@ -357,7 +357,7 @@ func bet_state() -> void:
         return
 
     # アクティブなプレイヤーを計算
-    active_players = []
+    active_players.clear()
     for seat in seats:
         var player = table_backend.seat_assignments[seat]
         if player != null:
@@ -841,7 +841,7 @@ func process_ACTION_END() -> void:
         sub_state = SubState.CHIPS_COLLECTING
 
         # アクティブなプレイヤーの数を数える
-        active_players = []
+        active_players.clear()
         for seat in seats:
             var player = table_backend.seat_assignments[seat]
             if player != null:

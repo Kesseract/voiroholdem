@@ -160,18 +160,17 @@ extends Control
 # テストのためのリファクタリング
 
 # 必要な値
-var bet_size = { "name": "table_1 bb:2 sb:1", "bb": 2, "sb": 1 }
-var buy_in = 100
-var dealer_name = "ずんだもん"
-var selected_cpus = ["四国めたん", "ずんだもん", "春日部つむぎ", "雨晴はう", "冥鳴ひまり"]
-var player = false
-var seeing = true    # 表側を表示するかどうか。trueなら見せる。falseなら見せない
+var bet_size: Dictionary = { "name": "table_1 bb:2 sb:1", "bb": 2, "sb": 1 }
+var buy_in: int = 100
+var dealer_name: String = "ずんだもん"
+var selected_cpus: Array[String] = ["四国めたん", "ずんだもん", "春日部つむぎ", "雨晴はう", "冥鳴ひまり"]
+var player: bool = false
+var seeing: bool = false    # 表側を表示するかどうか。trueなら見せる。falseなら見せない
 
 var game_process
 
 func _ready():
     # ゲームプロセスのインスタンスを作成する
-
     game_process = GameProcessBackend.new(bet_size, buy_in, dealer_name, selected_cpus, table_place, animation_place, player, seeing)
     game_process.name = "GameProcessBackend"
     add_child(game_process)

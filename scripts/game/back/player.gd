@@ -15,8 +15,8 @@ var last_action: Array[String] = []
 var has_acted: bool = false
 var is_folded: bool = false
 var is_all_in: bool = false
-var hand_category: Array[Array]
-var hand_rank: Array[String]
+var hand_category: Array
+var hand_rank: Array
 var rebuy_count: int
 
 # ボタンから受け取るアクションと実際のアクションの対応

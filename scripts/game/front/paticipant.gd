@@ -1,79 +1,101 @@
+# ノード
 extends Node2D
 
-var backend
-var sprite
-var name_action
-var chips
+# 属性
+var sprite: Sprite2D
+var name_action: Label
+var chips: Label
 
-@onready var add_child_node = null
-var add_child_flg = false
+# バックエンド
+var backend: ParticipantBackend
 
-var time_manager
+# 時間管理クラス
+var time_manager: TimeManager
 
-@onready var node = {
-    "Player": {
-        "Instance": $Player,
-        "Sprite": $Player/VBoxContainer/Frame/Sprite2D,
-        "NameAction": $Player/VBoxContainer/NameAction,
-        "Chips": $Player/VBoxContainer/Chips,
-    },
-    "Dealer": {
-        "Instance": $Dealer,
-        "Sprite": $Dealer/VBoxContainer/Frame/Sprite2D,
-        "NameAction": $Dealer/VBoxContainer/NameAction,
-        "Chips": null,
-    },
-    "PlayingDealer": {
-        "Instance": $PlayingDealer,
-        "Sprite": $PlayingDealer/VBoxContainer/Frame/Sprite2D,
-        "NameAction": $PlayingDealer/VBoxContainer/NameAction,
-        "Chips": $PlayingDealer/VBoxContainer/Chips,
-    }
-}
 
-func _init():
+func _init() -> void:
+    """初期化関数
+    Args:
+    Returns:
+        void
+    """
+    # 時間管理クラス作成
     time_manager = TimeManager.new()
 
-func _ready():
+
+func _ready() -> void:
+    """シーンがノードに追加されたときに呼ばれる関数
+    Args:
+    Returns:
+        void
+    """
+    # 時間管理クラスをノードに追加する
     add_child(time_manager)
 
-func set_sprite(value):
+
+func set_sprite(value: Texture2D) -> void:
+    """画像設定クラス
+    Args:
+        value Texture2D: 設定する画像
+    Returns:
+        void
+    """
+    # 画像を設定する
     sprite.texture = value
 
-func set_name_action(value):
+
+func set_name_action(value: String) -> void:
+    """名前セット関数
+    Args:
+        value String: 表示させたい名前
+    Returns:
+        void
+    """
+    # テキストに引数をセット
     name_action.text = value
 
-func set_chips(value):
+
+func set_chips(value: int) -> void:
+    """チップセット関数
+    Args:
+        value String: 表示させたいチップ数
+    Returns:
+        void
+    """
+    # テキストに引数をセット
     chips.text = str(value)
 
-func set_parameter(_backend, _seat):
+
+func set_parameter(_backend: ParticipantBackend, _seat: String) -> void:
+    """バックエンドセット関数
+    Args:
+        _backend CardBackend: カードバックエンド
+    Returns:
+        void
+    """
+    # 属性に引数をセット
     backend = _backend
 
     # 役割ごとのノードマッピング
-    var node_place = {
-        "Player": {
+    var role_map = {
+        "player": {
             "Instance": $Player,
             "Sprite": $Player/VBoxContainer/Frame/Sprite2D,
             "NameAction": $Player/VBoxContainer/NameAction,
             "Chips": $Player/VBoxContainer/Chips,
         },
-        "Dealer": {
+        "dealer": {
             "Instance": $Dealer,
             "Sprite": $Dealer/VBoxContainer/Frame/Sprite2D,
             "NameAction": $Dealer/VBoxContainer/NameAction,
             "Chips": null,
         },
-        "PlayingDealer": {
+        "playing_dealer": {
             "Instance": $PlayingDealer,
             "Sprite": $PlayingDealer/VBoxContainer/Frame/Sprite2D,
             "NameAction": $PlayingDealer/VBoxContainer/NameAction,
             "Chips": $PlayingDealer/VBoxContainer/Chips,
         }
-    }
-    var role_map = {
-        "player": node_place["Player"],
-        "dealer": node_place["Dealer"],
-        "playing_dealer": node_place["PlayingDealer"]
     }
 
     # 役割に基づいてノードを設定

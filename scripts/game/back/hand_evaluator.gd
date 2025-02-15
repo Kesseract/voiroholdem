@@ -54,13 +54,13 @@ func best_hand_from_seven(cards: Array[CardBackend]) -> Dictionary:
     return {"category": best_category, "rank": best_rank}
 
 
-func get_combinations(cards: Array, length: int) -> Array[Array]:
+func get_combinations(cards: Array[CardBackend], length: int) -> Array:
     """組み合わせを生成する関数
     Args:
         cards Array[CardBackend]: 7枚のカード
         length int: 何枚の組み合わせにするか
     Returns:
-        result Array[Array[CardBackend]]: length枚の組み合わせをさらに組み合わせた配列
+        result Array: length枚の組み合わせをさらに組み合わせた配列
     """
     # 再帰してきたときに返す用の条件
     if length == 0:
@@ -82,10 +82,10 @@ func get_combinations(cards: Array, length: int) -> Array[Array]:
     return result
 
 
-func evaluate_five(cards: Array[CardBackend]) -> Dictionary:
+func evaluate_five(cards: Array) -> Dictionary:
     """5枚のカードを評価する
     Args:
-        cards Array[CardBackend]: 5枚のカードの配列
+        cards Array: 5枚のカードの配列
     Returns:
         result Dictionary: 役とランクの辞書
     """
@@ -116,7 +116,7 @@ func evaluate_five(cards: Array[CardBackend]) -> Dictionary:
     return {"category": null, "rank": null}
 
 
-func is_royal_flush(cards: Array[CardBackend]) -> Dictionary:
+func is_royal_flush(cards: Array) -> Dictionary:
     """ロイヤルフラッシュ判定関数
     ストレートフラッシュであり、カードがA, K, Q, J, 10で構成されている
     Args:
@@ -141,7 +141,7 @@ func is_royal_flush(cards: Array[CardBackend]) -> Dictionary:
     return {"category": null, "rank": null}
 
 
-func is_straight_flush(cards: Array[CardBackend]) -> Dictionary:
+func is_straight_flush(cards: Array) -> Dictionary:
     """ストレートフラッシュ判定関数
     ストレートであり、フラッシュである
     Args:
@@ -158,7 +158,7 @@ func is_straight_flush(cards: Array[CardBackend]) -> Dictionary:
     return {"category": null, "rank": null}
 
 
-func is_four_of_a_kind(cards: Array[CardBackend]) -> Dictionary:
+func is_four_of_a_kind(cards: Array) -> Dictionary:
     """フォーオブアカインド判定関数
     同じランクのカードが4枚存在する
     Args:
@@ -178,7 +178,7 @@ func is_four_of_a_kind(cards: Array[CardBackend]) -> Dictionary:
     return {"category": null, "rank": null}
 
 
-func is_full_house(cards: Array[CardBackend]) -> Dictionary:
+func is_full_house(cards: Array) -> Dictionary:
     """フルハウス判定関数
     同じランクのカードが3枚と2枚のペアが存在する
     Args:
@@ -208,7 +208,7 @@ func is_full_house(cards: Array[CardBackend]) -> Dictionary:
     return {"category": null, "rank": null}
 
 
-func is_flush(cards: Array[CardBackend]) -> Dictionary:
+func is_flush(cards: Array) -> Dictionary:
     """フラッシュ判定関数
     すべてのスートが等しい
     Args:
@@ -236,7 +236,7 @@ func is_flush(cards: Array[CardBackend]) -> Dictionary:
     return {"category": null, "rank": null}
 
 
-func is_straight(cards: Array[CardBackend]) -> Dictionary:
+func is_straight(cards: Array) -> Dictionary:
     """ストレート判定関数
     数値が並んでいる
     ->                 ->                  ->
@@ -296,7 +296,7 @@ func is_straight(cards: Array[CardBackend]) -> Dictionary:
     return {"category": null, "rank": null}
 
 
-func is_three_of_a_kind(cards: Array[CardBackend]) -> Dictionary:
+func is_three_of_a_kind(cards: Array) -> Dictionary:
     """スリーオブアカインド判定関数
     同じランクのカードが3枚存在する
     Args:
@@ -333,7 +333,7 @@ func is_three_of_a_kind(cards: Array[CardBackend]) -> Dictionary:
     return {"category": null, "rank": null}
 
 
-func is_two_pair(cards: Array[CardBackend]) -> Dictionary:
+func is_two_pair(cards: Array) -> Dictionary:
     """ツーペア判定用関数
     同じランクのカードが2枚、それが2セット存在している
     Args:
@@ -375,7 +375,7 @@ func is_two_pair(cards: Array[CardBackend]) -> Dictionary:
     return {"category": null, "rank": null}
 
 
-func is_one_pair(cards: Array[CardBackend]) -> Dictionary:
+func is_one_pair(cards: Array) -> Dictionary:
     """ワンペア判定用関数
     同じランクのカードが2枚、それが1セット存在している
     Args:
@@ -436,7 +436,7 @@ func is_high_card(cards: Array) -> Dictionary:
     return {"category": HandCategory.HIGH_CARD, "rank": ranks.slice(0, 5)}
 
 
-func get_rank_counts(cards: Array[CardBackend]) -> Dictionary:
+func get_rank_counts(cards: Array) -> Dictionary:
     """カードのランクをカウントする関数
     Args:
         cards Array[CardBackend]: 5枚のカードの配列
@@ -454,7 +454,7 @@ func get_rank_counts(cards: Array[CardBackend]) -> Dictionary:
     return counts
 
 # カードのランクをソートするヘルパーメソッド
-func sorted_ranks(cards: Array[CardBackend]) -> Array[int]:
+func sorted_ranks(cards: Array) -> Array[int]:
     """カードのランクをソートする関数
     カードのランクをRANKSに基づいて数値に変換し、降順でソート
     Args:
