@@ -63,9 +63,9 @@ var animation_place: Dictionary
 var player_flg: bool
 var table_backend: TableBackend
 var dealer: DealerBackend
-var n_moving: int = 0
 var initial_dealer: ParticipantBackend
 var seats: PackedStringArray
+var n_moving: int = 0
 var start_index: int
 var current_action: int
 var n_active_players: int = 0
@@ -358,19 +358,12 @@ func bet_state() -> void:
 
     # アクティブなプレイヤーを計算
     active_players.clear()
-    for seat in seats:
-        var player = table_backend.seat_assignments[seat]
-        if player != null:
-            if not player.player_script.is_folded:
-                active_players.append(player)
+    active_players = dealer.get_active_players(true, true)
 
     # アクティブなプレイヤーのうち、オールインしていないプレイヤーがいるかチェック
     var all_players_all_in = true
-    for player in active_players:
-        if not player.player_script.is_folded:
-            if not player.player_script.is_all_in:
-                # 一人でもいればfalseとなる
-                all_players_all_in = false
+    if active_players.size() > 0:
+        all_players_all_in = false
 
     # 全員がオールインしている場合
     if all_players_all_in:
@@ -380,7 +373,7 @@ func bet_state() -> void:
         return
 
     # アクションを行う関数を実行
-    var action = dealer.bet_round(seats, start_index, table_backend.seat_assignments, bb, current_action)
+    var action = dealer.bet_round(start_index, bb, current_action)
 
     # 何らかのアクションが行われた場合、それをprintする
     if action != "none_player":
@@ -407,17 +400,20 @@ func bet_state() -> void:
         current_action += 1
         return
 
+    # アクティブなプレイヤーを計算
+    active_players.clear()
+    active_players = dealer.get_active_players(true, false)
+
     # ベットしたプレイヤーを取得
     var active_players_bet = []
     for player in active_players:
-        if not player.player_script.is_folded:
-            if not player.player_script.current_bet in active_players_bet:
-                active_players_bet.append(player.player_script.current_bet)
+        if not player.player_script.current_bet in active_players_bet:
+            active_players_bet.append(player.player_script.current_bet)
 
     # アクティブなプレイヤーが全員ベットしたかをチェック
     var active_players_acted = true
     for player in active_players:
-        if not player.player_script.is_folded and not (player.player_script.has_acted or player.player_script.is_all_in):
+        if not (player.player_script.has_acted or player.player_script.is_all_in):
             # 一人でもしていない場合falseになる
             active_players_acted = false
             break
@@ -431,10 +427,7 @@ func bet_state() -> void:
         return
 
     # オールインしたプレイヤーを再度取得
-    var all_in_players = []
-    for player in active_players:
-        if player.player_script.is_all_in:
-            all_in_players.append(player)
+    var all_in_players = dealer.get_active_players(true, true)
 
     # オールインしたプレイヤーの数とアクティブなプレイヤーの数が等しい
     # 全員オールインしている
@@ -460,8 +453,15 @@ func process_INIT() -> void:
     # テーブル作成
     table_backend = TableBackend.new(self, bet_size, buy_in, dealer_name, selected_cpus, table_place, animation_place, seeing)
 
+    # 座席情報をリストにする
+    seats = table_backend.seat_assignments.keys()
+
     # ディーラーを変数に入れる
     dealer = table_backend.dealer.dealer_script
+
+    # 座席情報をディーラーにも連携する
+    dealer.seat_assignments = table_backend.seat_assignments
+    dealer.seats = seats
 
     # 信号接続
     table_backend.connect("n_moving_plus", Callable(self, "_on_n_moving_plus"))
@@ -567,7 +567,7 @@ func process_SETTING_DEALER_BUTTON() -> void:
         sub_state = SubState.CARD_MOVING
 
         # カードを1枚だけ配る関数実行
-        dealer.deal_card(table_backend.seat_assignments)
+        dealer.deal_card()
     elif state_in_state == 2:
         # ディーラーボタンの初期配置
         # state_in_stateのprint
@@ -577,7 +577,7 @@ func process_SETTING_DEALER_BUTTON() -> void:
         sub_state = SubState.CARD_MOVING
 
         # ディーラーボタンの初期配置関数実行
-        dealer.set_initial_button(table_backend.seat_assignments)
+        dealer.set_initial_button()
     elif state_in_state == 3:
         # ディーラーボタンを動かす
         # state_in_stateのprint
@@ -587,7 +587,7 @@ func process_SETTING_DEALER_BUTTON() -> void:
         sub_state = SubState.DEALER_BUTTON_MOVING
 
         # ハンドを削除して、ディーラーボタンを動かす関数実行
-        dealer.hand_clear(table_backend.seat_assignments)
+        dealer.hand_clear()
 
 
 func process_DEALER_SET() -> void:
@@ -638,7 +638,7 @@ func process_PAYING_SB_BB() -> void:
     sub_state = SubState.CHIP_BETTING
 
     # ディーラーボタンの一つとなりをSBを支払うプレイヤーとして取得
-    var sb_seat = dealer.get_dealer_button_index(table_backend.seat_assignments, 1)
+    var sb_seat = dealer.get_dealer_button_index(1)
     var sb_player = table_backend.seat_assignments[sb_seat]
 
     # SBをベットさせる
@@ -666,7 +666,7 @@ func process_PAYING_SB_BB() -> void:
     _on_n_moving_plus()
 
     # ディーラーボタンの二つとなりをBBを支払うプレイヤーとして取得
-    var bb_seat = dealer.get_dealer_button_index(table_backend.seat_assignments, 2)
+    var bb_seat = dealer.get_dealer_button_index(2)
     var bb_player = table_backend.seat_assignments[bb_seat]
 
     # BBをベットさせる
@@ -733,14 +733,14 @@ func process_DEALING_CARD() -> void:
         print("State_in_State.deal_card_one")
 
         # カードを配る関数実行
-        dealer.deal_hole_cards(table_backend.seat_assignments, "Hand1")
+        dealer.deal_hole_cards("Hand1")
     elif state_in_state == 2:
         # プレイヤーに2枚目のカードを配る
         # state_in_stateのprint
         print("State_in_State.deal_card_two")
 
         # カードを配る関数実行
-        dealer.deal_hole_cards(table_backend.seat_assignments, "Hand2")
+        dealer.deal_hole_cards("Hand2")
 
 
 func process_DEALED_CARD() -> void:
@@ -752,11 +752,8 @@ func process_DEALED_CARD() -> void:
     # ステートのprint
     print("State.DEALED_CARD")
 
-    # 座席情報を配列にする
-    seats = table_backend.seat_assignments.keys()
-
     # ディーラーボタンの3つとなりの座席を取得
-    start_index = (seats.find(dealer.get_dealer_button_index(table_backend.seat_assignments, 3))) % seats.size()
+    start_index = (seats.find(dealer.get_dealer_button_index(3))) % seats.size()
 
     # その箇所からいくつ隣化の変数を初期化
     current_action = 0
@@ -822,7 +819,7 @@ func process_ACTION_END() -> void:
         sub_state = SubState.CHIPS_COLLECTING
 
         # まずベットされたものをポットとして集める
-        var pot_value = dealer.pot_collect(table_backend.seat_assignments)
+        var pot_value = dealer.pot_collect()
 
         # ベット履歴をリセット
         dealer.bet_record = [0]
@@ -842,11 +839,7 @@ func process_ACTION_END() -> void:
 
         # アクティブなプレイヤーの数を数える
         active_players.clear()
-        for seat in seats:
-            var player = table_backend.seat_assignments[seat]
-            if player != null:
-                if not player.player_script.is_folded:
-                    active_players.append(player)
+        active_players = dealer.get_active_players(true, false)
 
         # 待機処理
         time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
@@ -891,17 +884,19 @@ func process_ACTION_END() -> void:
             # アクションを行うプレイヤーの再計算
             current_action = 0
             n_active_players = 0
-            for seat in seats:
-                var player = table_backend.seat_assignments[seat]
-                if player != null and not player.player_script.is_folded and not player.player_script.is_all_in:
-                    # アクションを行うプレイヤーの追加
-                    n_active_players += 1
 
-                    # アクションしたかのフラグをfalseに
-                    player.player_script.has_acted = false
+            # アクティブなプレイヤーを計算
+            active_players.clear()
+            active_players = dealer.get_active_players(true, true)
+            for player in active_players:
+                # アクションを行うプレイヤーの追加
+                n_active_players += 1
 
-                    # アクション履歴をリセットする
-                    player.player_script.last_action.clear()
+                # アクションしたかのフラグをfalseに
+                player.player_script.has_acted = false
+
+                # アクション履歴をリセットする
+                player.player_script.last_action.clear()
         else:
             # RIVER_ACTION_ENDの場合だけなにもなし
             # 次のステートへ進む
@@ -954,7 +949,7 @@ func process_SHOW_DOWN() -> void:
         sub_state = SubState.CARD_OPENING
 
         # 手の強さ判定
-        active_players = dealer.evaluate_hand(table_backend.seat_assignments)
+        active_players = dealer.evaluate_hand()
 
         # 待機処理
         time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
@@ -989,7 +984,7 @@ func process_DISTRIBUTIONING_POTS() -> void:
     sub_state = SubState.POTS_COLLECTING
 
     # ポットの分配を行う関数実行
-    dealer.distribute_pots(active_players, table_backend.seat_assignments)
+    dealer.distribute_pots(active_players)
 
 
 func process_DISTRIBUTIONED_POTS() -> void:
@@ -1018,7 +1013,7 @@ func process_ROUND_RESETTING() -> void:
     sub_state = SubState.CARD_MOVING
 
     # ラウンドのリセット関数実行
-    dealer.reset_round(table_backend.seat_assignments, buy_in)
+    dealer.reset_round(buy_in)
 
 
 func process_ROUND_RESETED() -> void:
@@ -1047,7 +1042,7 @@ func process_NEXT_DEALER_BUTTON() -> void:
     sub_state = SubState.DEALER_BUTTON_MOVING
 
     # ディーラーボタンを次の人に動かす関数実行
-    dealer.move_dealer_button(table_backend.seat_assignments)
+    dealer.move_dealer_button()
 
 
 func process_MOVED_DEALER_BUTTON() -> void:

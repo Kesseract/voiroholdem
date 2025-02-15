@@ -5,7 +5,7 @@ extends Node
 class_name DealerBackend
 
 # 属性
-var deck
+var deck: DeckBackend
 var pots: Array[PotBackend] = []
 var bet_record: Array[int] = []
 var community_cards: Array[CardBackend] = []
@@ -14,6 +14,8 @@ var game_process: GameProcessBackend
 var hand_evaluator: HandEvaluatorBackend
 var animation_place: Dictionary
 var table_place: Dictionary
+var seat_assignments: Dictionary
+var seats: PackedStringArray
 
 # 表示フラグ、表示インスタンス
 var seeing: bool
@@ -25,6 +27,7 @@ var time_manager: TimeManager
 signal action_finished
 signal n_moving_plus
 signal n_active_players_plus
+
 
 func _init(_game_process: GameProcessBackend, _seeing: bool) -> void:
     """初期化関数
@@ -97,17 +100,13 @@ func burn_card(place: String) -> void:
     burn_cards.append(card)
 
 
-func deal_card(seat_assignments: Dictionary, start_position: int = 0) -> void:
+func deal_card(start_position: int = 0) -> void:
     """プレイヤーに1枚だけカードを配る関数
     Args:
-        seat_assignments Dictionary: 座席情報
         start_position int: どこから配るか
     Returns:
         void
     """
-    # 座席番号をリストに変換してインデックスでアクセス可能にする
-    var seats = seat_assignments.keys()
-
     # 座席数のカウント
     var seat_count = seats.size()
 
@@ -172,16 +171,12 @@ func get_card_param(player: ParticipantBackend) -> Dictionary:
     }
 
 
-func set_initial_button(seat_assignments: Dictionary) -> ParticipantBackend:
+func set_initial_button() -> ParticipantBackend:
     """ディーラーボタン初期配置関数
     Args:
-        seat_assignments Dictionary: 座席情報
     Returns:
         dealer_player ParticipantBackend: ディーラーボタン所持参加者
     """
-    # 座席リストを取得
-    var seats = seat_assignments.keys()
-
     # 初期設定
     var dealer_player = seat_assignments[seats[0]]
     var dealer_seat = "Seat1"
@@ -235,16 +230,12 @@ func set_initial_button(seat_assignments: Dictionary) -> ParticipantBackend:
     return dealer_player
 
 
-func hand_clear(seat_assignments: Dictionary) -> void:
+func hand_clear() -> void:
     """全プレイヤーの手札をクリアする関数
     Args:
-        seat_assignments Dictionary: 座席情報
     Returns:
         void
     """
-    # 座席リストを取得
-    var seats = seat_assignments.keys()
-
     # 座席の数だけループ
     for seat in seats:
         # プレイヤーを取得
@@ -284,16 +275,14 @@ func hand_clear(seat_assignments: Dictionary) -> void:
     n_moving_plus.emit()
 
 
-func get_dealer_button_index(seat_assignments: Dictionary, count: int = 0) -> String:
+func get_dealer_button_index(count: int = 0) -> String:
     """ディーラーボタンから指定の隣のプレイヤーを取得する関数
     Args:
-        seat_assignments Dictionary: 座席情報
         count int: いくつ隣か 初期値0
     Returns:
         active_seats[next_index] String: 指定の数隣の席
     """
     # 座席リストを取得して順番に探索
-    var seats = seat_assignments.keys()
     var dealer_seat = null
 
     # ディーラーを持つ座席を探す
@@ -321,7 +310,7 @@ func get_dealer_button_index(seat_assignments: Dictionary, count: int = 0) -> St
     return active_seats[next_index]
 
 
-func deal_hole_cards(seat_assignments: Dictionary, hand: String) -> void:
+func deal_hole_cards(hand: String) -> void:
     """各プレイヤーに2枚のホールカードを配る関数
     Args:
         seat_assignments Dictionary: 座席情報
@@ -338,20 +327,15 @@ func deal_hole_cards(seat_assignments: Dictionary, hand: String) -> void:
     # 次プレイヤーの待機時間
     var total_delay = 0.0
 
-    # 座席リストを取得してソート
-    var seats = seat_assignments.keys()
-
     # カードを配り始めるポジション
-    var start_position = (seats.find(get_dealer_button_index(seat_assignments, 1))) % seats.size()
+    var start_position = (seats.find(get_dealer_button_index(1))) % seats.size()
 
     # 各プレイヤーにカードを1枚ずつ配る関数実行
-    total_delay = distribute_single_card(seats, start_position, seat_assignments, total_delay, delay_base, card_delay, hand)
+    total_delay = distribute_single_card(start_position, total_delay, delay_base, card_delay, hand)
 
 
 func distribute_single_card(
-    seats: PackedStringArray,
     start_position: int,
-    seat_assignments: Dictionary,
     base_delay: float,
     delay_base: float,
     card_delay: float,
@@ -359,9 +343,7 @@ func distribute_single_card(
 ) -> int:
     """各プレイヤーに1枚のカードを配る関数
     Args:
-        seats PackedStringArray: 座席リスト
         start_position int: カードを配り始めるポジション
-        seat_assignments Dictionary: 座席情報
         base_delay float: 次プレイヤーの待機時間
         delay_base float: 各プレイヤーへのディレイ間隔
         card_delay float: カード配布アニメーションの時間
@@ -409,13 +391,11 @@ func distribute_single_card(
     return delay
 
 
-func set_action_list(player: ParticipantBackend, current_max_bet: int, seats: PackedStringArray, seat_assignments: Dictionary) -> PackedStringArray:
+func set_action_list(player: ParticipantBackend, current_max_bet: int) -> PackedStringArray:
     """アクションリストを作成する関数
     Args:
         player ParticipantBackend: アクションリストを作成するプレイヤー
         current_max_bet int: 最大掛け金
-        seats PackedStringArray: 席順
-        seat_assignments Dictionary: 座席情報
     Returns:
         action_list PackedStringArray: アクションリスト
     """
@@ -660,12 +640,10 @@ func set_bet(amount, player, current_seat) -> void:
         player.player_script.time_manager.wait_to(0.5, Callable(game_process, "_on_moving_finished"))
 
 
-func bet_round(seats: PackedStringArray, start_index: int, seat_assignments: Dictionary, bb_value: int, current_action: int) -> String:
+func bet_round(start_index: int, bb_value: int, current_action: int) -> String:
     """ベットラウンドのアクションを処理する関数
     Args:
-        seats PackedStringArray: 座席
         start_index int: 開始位置
-        seat_assignments: 座席情報
         bb_value: BBの金額
         current_action: いくつ進んだか
     Returns:
@@ -690,7 +668,7 @@ func bet_round(seats: PackedStringArray, start_index: int, seat_assignments: Dic
     var current_max_bet = bet_record[-1]
 
     # アクションのリストを取得
-    var action_list = set_action_list(player, current_max_bet, seats, seat_assignments)
+    var action_list = set_action_list(player, current_max_bet)
 
     # アクションを行う
     var action = player.player_script.select_action(action_list)
@@ -728,10 +706,9 @@ func bet_round(seats: PackedStringArray, start_index: int, seat_assignments: Dic
     return action
 
 
-func pot_collect(seat_assignments: Dictionary) -> int:
+func pot_collect() -> int:
     """プレイヤーの賭け金をポットとして集める関数
     Args:
-        seat_assignments Dictionary: 座席情報
     Returns:
         total_chips int: ポットとして集まった合計金額
     """
@@ -919,10 +896,9 @@ func compare_players(a: ParticipantBackend, b: ParticipantBackend) -> bool:
 
     return false
 
-func evaluate_hand(seat_assignments: Dictionary) -> Array[ParticipantBackend]:
+func evaluate_hand() -> Array[ParticipantBackend]:
     """手の強さ比較関数
     Args:
-        seat_assignments Dictionary: 座席情報
     Returns:
         active_players Array[ParticipantBackend]: 手の強さ順に並べたプレイヤーリスト
     """
@@ -945,11 +921,10 @@ func evaluate_hand(seat_assignments: Dictionary) -> Array[ParticipantBackend]:
     return active_players
 
 
-func distribute_pots(active_players: Array[ParticipantBackend], seat_assignments: Dictionary) -> void:
+func distribute_pots(active_players: Array[ParticipantBackend]) -> void:
     """ポットをプレイヤーに分配する関数
     Args:
-        active_players Array[ParticipantBackend]: 手の強さ順に並べたプレイヤーリスト,
-        seat_assignments Dictionary: 座席情報
+        active_players Array[ParticipantBackend]: 手の強さ順に並べたプレイヤーリスト
     Returns:
         void
     """
@@ -1053,10 +1028,9 @@ func distribute_pots(active_players: Array[ParticipantBackend], seat_assignments
         n_moving_plus.emit()
 
 
-func reset_round(seat_assignments: Dictionary, buy_in: int) -> void:
+func reset_round(buy_in: int) -> void:
     """ラウンドの終了後に必要な情報をリセットする
     Args:
-        seat_assignments Dictionary: 座席情報
         buy_in int: 持ち込みチップ数
     Returns:
         void
@@ -1074,7 +1048,6 @@ func reset_round(seat_assignments: Dictionary, buy_in: int) -> void:
 
     # 1. 各プレイヤーのカレントベットと手札をリセット
     if seeing:
-        var seats = seat_assignments.keys()
         for seat in seats:
             var player = seat_assignments[seat]
             if player and player.player_script.hand.size() == 2:
@@ -1146,10 +1119,9 @@ func reset_round(seat_assignments: Dictionary, buy_in: int) -> void:
         n_moving_plus.emit()
 
 
-func move_dealer_button(seat_assignments: Dictionary) -> void:
+func move_dealer_button() -> void:
     """ディーラーボタンを次のプレイヤーに移動します
     Args:
-        seat_assignments Dictionary: 座席情報
     Returns:
         void
     """
@@ -1218,3 +1190,33 @@ func to_str() -> String:
         result += "バーンカード: なし\n"
     result += "=======================\n"
     return result
+
+
+func get_active_players(is_fold: bool, is_all_in: bool) -> Array[ParticipantBackend]:
+    """アクティブプレイヤーを抽出する
+    Args:
+        is_fold bool: Trueの場合、フォールドしたプレイヤーを除外する
+                        Falseの場合、フォールドしたプレイヤーを含める
+        is_all_in bool: Trueの場合、オールインしたプレイヤーを除外する
+                        Falseの場合、オールインしたプレイヤーを含める
+    Returns:
+        active_players_list Array[ParticipantBackend]: 抽出したアクティブなプレイヤーのリスト
+    """
+    # 返り値用の配列を作成
+    var active_players_list = []
+
+    # 座席からプレイヤーを取得する
+    for seat in seats:
+        var player = seat_assignments[seat]
+        if player != null:
+            active_players_list.append(player)
+
+    # 引数に応じて、さらに絞り込む
+    if is_fold:
+        active_players_list = active_players_list.filter(func(p): return(not p.player_script.is_folded))
+
+    if is_all_in:
+        active_players_list = active_players_list.filter(func(p): return(not p.player_script.is_all_in))
+
+    # 抽出したアクティブなプレイヤーのリストを返す
+    return active_players_list
