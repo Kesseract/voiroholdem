@@ -7,7 +7,7 @@ class_name DealerBackend
 # 属性
 var deck: DeckBackend
 var pots: Array[PotBackend] = []
-var bet_record: Array[int] = []
+var bet_record: Array = []
 var community_cards: Array[CardBackend] = []
 var burn_cards: Array[CardBackend] = []
 var game_process: GameProcessBackend
@@ -68,6 +68,7 @@ func _ready() -> void:
         void
     """
     # 時間管理クラスをノードに追加する
+    time_manager.name = "TimeManager"
     add_child(time_manager)
 
 
@@ -178,7 +179,7 @@ func set_initial_button() -> ParticipantBackend:
         dealer_player ParticipantBackend: ディーラーボタン所持参加者
     """
     # 初期設定
-    var dealer_player = seat_assignments[seats[0]]
+    var dealer_player = seat_assignments["Seat1"]
     var dealer_seat = "Seat1"
 
     # ランク定義 (2〜10, J, Q, K, A)
@@ -198,8 +199,8 @@ func set_initial_button() -> ParticipantBackend:
 
             # 対象のプレイヤーのほうが強い場合
             if dealer_player == null or (
-                ranks[player_card.rank] > ranks[dealer_card.rank] or
-                (ranks[player_card.rank] == ranks[dealer_card.rank] and suits[player_card.suit] > suits[dealer_card.suit])):
+                ranks[player_card["rank"]] > ranks[dealer_card["rank"]] or
+                (ranks[player_card["rank"]] == ranks[dealer_card["rank"]] and suits[player_card["suit"]] > suits[dealer_card["suit"]])):
                 # 暫定ディーラーを更新する
                 dealer_player = current_player
                 dealer_seat = seat
@@ -400,7 +401,7 @@ func set_action_list(player: ParticipantBackend, current_max_bet: int) -> Packed
         action_list PackedStringArray: アクションリスト
     """
     # アクションリストを保持する配列
-    var action_list = []
+    var action_list: PackedStringArray = []
 
     # チップを出さなければならない場合
     if bet_record[-1] > player.player_script.current_bet:
@@ -408,7 +409,7 @@ func set_action_list(player: ParticipantBackend, current_max_bet: int) -> Packed
         action_list.append("fold")
 
     # 誰かが賭けているなら
-    if bet_record.size() >= 2:
+    if bet_record.size() >= 1:
         # 最大掛け金 - すでに自分が賭けている金額が自分の所持チップより少ない場合
         if player.player_script.chips <= current_max_bet - player.player_script.current_bet:
             # オールインが許可される
@@ -439,13 +440,8 @@ func set_action_list(player: ParticipantBackend, current_max_bet: int) -> Packed
         action_list.append("check")
 
         # 再度アクティブなプレイヤーを更新
-        var active_players = []
-
         # フォールドもオールインもしていないプレイヤーを集計
-        for seat in seats:
-            var p = seat_assignments[seat]
-            if p != null and not p.player_script.is_folded and not p.player_script.is_all_in:
-                active_players.append(p)
+        var active_players = get_active_players(true, true)
 
         # アクティブなプレイヤーが一人でもいて、自分が賭け、所持しているチップが多い場合
         if active_players.size() > 1:
@@ -483,7 +479,6 @@ func selected_action(action: String, player: ParticipantBackend, current_max_bet
     elif action == "check":
         # チェックが選択された場合
         # 見た目がある場合、対応した信号を送る
-        # TODO ここのn_moving_plus（fold含む）結構謎なので調査する
         if seeing:
             player.front.time_manager.move_to(player.front, Vector2(0, 0), 0.5, Callable(game_process, "_on_moving_finished"))
 
@@ -680,11 +675,7 @@ func bet_round(start_index: int, bb_value: int, current_action: int) -> String:
     player.player_script.has_acted = true
 
     # 再度アクティブなプレイヤーを更新
-    var active_players = []
-    for seat in seats:
-        var p = seat_assignments[seat]
-        if p != null and not p.player_script.is_folded and not p.player_script.is_all_in:
-            active_players.append(p)
+    var active_players = get_active_players(true, true)
 
     # レイズやベットの場合、他プレイヤーのアクションフラグをリセット
     if action in ["bet", "raise", "all-in"]:
@@ -827,7 +818,7 @@ func pot_collect() -> int:
         if table_place["Pot"].get_child_count() > 0:
             # そこに合計する
             var already_pot = table_place["Pot"].get_child(0)
-            already_pot.set_bet_value(total_chips)
+            already_pot.set_chip_value(total_chips)
         else:
             # そうでない場合、あらたにポットとしてインスタンスを作成する
             var chip_instance = load("res://scenes/gamecomponents/Chip.tscn")
@@ -921,89 +912,83 @@ func evaluate_hand() -> Array[ParticipantBackend]:
     return active_players
 
 
-func distribute_pots(active_players: Array[ParticipantBackend]) -> void:
+func distribute_pots(active_players: Array) -> void:
     """ポットをプレイヤーに分配する関数
     Args:
         active_players Array[ParticipantBackend]: 手の強さ順に並べたプレイヤーリスト
     Returns:
         void
     """
-    # プレイヤーが1人ならそのまま全ポットを獲得
-    if active_players.size() == 1:
-        # 先頭の人だけ取得
-        var winner = active_players[0]
-
-        # ポットの合計値を計算
-        var total_chips = 0
-        for pot in pots:
-            total_chips += pot.total
-
-        # 勝者に加算
-        winner.player_script.chips += total_chips
-
-        # 勝者の席を取得
-        var winner_seat = null
-        for seat in seat_assignments.keys():
-            var player = seat_assignments[seat]
-            if player != null and player.player_script.player_name == winner.player_script.player_name:
-                winner_seat = seat
-
-        # 見た目処理
-        if seeing:
-            # チップ数表示を更新
-            winner.front.set_chips(winner.player_script.chips)
-
-            # ポットの位置から、勝者の位置に移動
-            var pot = table_place["Pot"].get_child(0)
-            pot.time_manager.move_to(pot, (animation_place[winner_seat]["Seat"].get_position() + animation_place[winner_seat]["Bet"].get_position()) - table_place["Pot"].get_position(), 0.5, Callable(game_process, "_on_moving_finished_queue_free").bind(pot))
-        else:
-            # 待機処理
-            time_manager.wait_to(0.5, Callable(game_process, "_on_moving_finished"))
-
-        # 動作、待機の分だけ信号を送る
-        n_moving_plus.emit()
-        return
-
     # ポットごとに分配
+    var i = 1
     for pot in pots:
-        # 祖のポットにおけるプレイヤーの貢献度を取得
+        # そのポットにおけるプレイヤーの貢献度を取得
         var contributors = pot.contributions.keys()
 
-        # 貢献地が存在する場合
-        if contributors.size() > 0:
-            # ポットを受け取ることが可能な人の中から、貢献度を持っている人を取得
-            var eligible_players = active_players.filter(func(player): return player.player_script.player_name in contributors)
+        # ポットに対して賭けたプレイヤーがいない場合はスキップ
+        if contributors.size() == 0:
+            continue
 
-            # チェック: eligible_playersが空の場合、スキップ
-            if eligible_players.size() == 0:
-                continue
+        # ポットを受け取ることが可能なプレイヤーのリストを作成（ポットにベットしていたプレイヤーのみ）
+        var eligible_players = active_players.filter(func(player): return player.player_script.player_name in contributors)
 
-            # 最も強いプレイヤーを取得
-            var strongest_hand = eligible_players[0].player_script.hand_rank
-            var winners = eligible_players.filter(func(player): return player.player_script.hand_rank == strongest_hand)
-
-            # 勝者にポットを分配
-            var chips_per_winner = pot.total / winners.size()
-            var i = 1
-            for winner in winners:
-                # 勝者にチップを加算
-                winner.player_script.chips += chips_per_winner
-
-                # 勝者の席を取得
-                var winner_seat
+        # ポットに関与したプレイヤーがいない場合はスキップ
+        if eligible_players.size() == 0:
+            var refund_amount = pot.total / contributors.size()
+            for contributor_name in contributors:
                 for seat in seat_assignments.keys():
                     var player = seat_assignments[seat]
-                    if player != null and player.player_script.player_name == winner.player_script.player_name:
-                        winner_seat = seat
+                    if player != null and player.player_script.player_name == contributor_name:
+                        player.player_script.chips += refund_amount
 
-                # 見た目処理
-                if seeing:
-                    # チップ数表示を更新
-                    winner.front.set_chips(chips_per_winner)
+                        # 見た目処理（チップを返すアニメーション）
+                        if seeing:
+                            player.front.set_chips(player.player_script.chips)
+                            var pot_instance = load("res://scenes/gamecomponents/Chip.tscn")
+                            var pot_front = pot_instance.instantiate()
+                            pot_front.set_chip_sprite(true)
+                            pot_front.set_bet_value(refund_amount)
+                            table_place["Pot"].add_child(pot_front)
+                            table_place["Pot"].get_child(0).set_bet_value(-1 * refund_amount)
+                            pot_front.time_manager.move_to(pot_front, (animation_place[seat]["Seat"].get_position() + animation_place[seat]["Bet"].get_position()) - table_place["Pot"].get_position(), 0.5, Callable(game_process, "_on_moving_finished_queue_free").bind(pot_front))
 
-                    # チップが分割されるかどうか
-                    var pot_front = null
-                    if i == winners.size():
+                            # # 動作、待機の分だけ信号を送る
+                            n_moving_plus.emit()
+            continue
+
+        # 最も強いハンドを持つプレイヤーを取得
+        var strongest_hand_category = eligible_players[0].player_script.hand_category
+        var strongest_hand_rank = eligible_players[0].player_script.hand_rank
+        var winners = eligible_players.filter(func(player): return player.player_script.hand_category == strongest_hand_category and player.player_script.hand_rank == strongest_hand_rank)
+
+        print(eligible_players)
+        print(winners)
+
+        # ポットを勝者に分配
+        var chips_per_winner = pot.total / winners.size()
+        var j = 1
+        for winner in winners:
+            # 勝者にチップを加算
+            winner.player_script.chips += chips_per_winner
+
+            # 勝者の席を取得
+            var winner_seat = null
+            for seat in seat_assignments.keys():
+                var player = seat_assignments[seat]
+                if player != null and player.player_script.player_name == winner.player_script.player_name:
+                    winner_seat = seat
+
+            # 見た目処理
+            if seeing:
+                # チップ数表示を更新
+                winner.front.set_chips(winner.player_script.chips)
+
+                # チップが分割されるかどうか
+                var pot_front = null
+                print(j)
+                print(winners.size())
+                if j == winners.size():
+                    if i == pots.size():
                         # 最後に残ったポットを移動する
                         pot_front = table_place["Pot"].get_child(0)
                     else:
@@ -1014,13 +999,24 @@ func distribute_pots(active_players: Array[ParticipantBackend]) -> void:
                         pot_front.set_bet_value(chips_per_winner)
                         table_place["Pot"].add_child(pot_front)
                         table_place["Pot"].get_child(0).set_bet_value(-1 * chips_per_winner)
-                    pot_front.time_manager.move_to(pot_front, (animation_place[winner_seat]["Seat"].get_position() + animation_place[winner_seat]["Bet"].get_position()) - table_place["Pot"].get_position(), 0.5, Callable(game_process, "_on_moving_finished_queue_free").bind(pot_front))
+                else:
+                    # 新たにチップを作って、移動する
+                    var pot_instance = load("res://scenes/gamecomponents/Chip.tscn")
+                    pot_front = pot_instance.instantiate()
+                    pot_front.set_chip_sprite(true)
+                    pot_front.set_bet_value(chips_per_winner)
+                    table_place["Pot"].add_child(pot_front)
+                    table_place["Pot"].get_child(0).set_bet_value(-1 * chips_per_winner)
 
-                    # 動作、待機の分だけ信号を送る
-                    n_moving_plus.emit()
+                pot_front.time_manager.move_to(pot_front, (animation_place[winner_seat]["Seat"].get_position() + animation_place[winner_seat]["Bet"].get_position()) - table_place["Pot"].get_position(), 0.5, Callable(game_process, "_on_moving_finished_queue_free").bind(pot_front))
 
-                    # いくつのポットを動かしたかを加算
-                    i += 1
+                # 動作、待機の分だけ信号を送る
+                n_moving_plus.emit()
+
+                # いくつのポットを動かしたかを加算
+                j += 1
+        i += 1
+
 
     # 見た目処理がない場合、待機処理を入れる
     if not seeing:
@@ -1203,7 +1199,7 @@ func get_active_players(is_fold: bool, is_all_in: bool) -> Array[ParticipantBack
         active_players_list Array[ParticipantBackend]: 抽出したアクティブなプレイヤーのリスト
     """
     # 返り値用の配列を作成
-    var active_players_list = []
+    var active_players_list: Array[ParticipantBackend]
 
     # 座席からプレイヤーを取得する
     for seat in seats:

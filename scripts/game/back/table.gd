@@ -78,14 +78,6 @@ func _init(
     # 参加者初期化処理実行
     _init_participant()
 
-func _ready() -> void:
-    """シーンがノードに追加されたときに呼ばれる関数
-    Args:
-    Returns:
-        void
-    """
-    # テーブルの見た目をノードに追加する
-    table_place["Instance"].add_child(front)
 
 func _init_participant() -> void:
     """参加者初期化処理

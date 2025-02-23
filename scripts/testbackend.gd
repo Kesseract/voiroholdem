@@ -156,16 +156,13 @@ extends Control
     },
 }
 
-#TODO 次のタスク
-# テストのためのリファクタリング
-
 # 必要な値
 var bet_size: Dictionary = { "name": "table_1 bb:2 sb:1", "bb": 2, "sb": 1 }
 var buy_in: int = 100
 var dealer_name: String = "ずんだもん"
 var selected_cpus: Array[String] = ["四国めたん", "ずんだもん", "春日部つむぎ", "雨晴はう", "冥鳴ひまり"]
 var player: bool = false
-var seeing: bool = false    # 表側を表示するかどうか。trueなら見せる。falseなら見せない
+var seeing: bool = true    # 表側を表示するかどうか。trueなら見せる。falseなら見せない
 
 var game_process
 

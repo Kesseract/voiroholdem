@@ -39,4 +39,5 @@ func _ready() -> void:
         void
     """
     # 時間管理クラスをノードに追加する
+    time_manager.name = "TimeManager"
     add_child(time_manager)

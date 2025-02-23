@@ -237,9 +237,7 @@ const RANKS = {
 
 
 # スート定義 (♣︎ < ♦︎ < ♥︎ < ♠︎)
-const SUITS = {
-    "♣︎": 1, "♦︎": 2, "♥︎": 3, "♠︎": 4
-}
+const SUITS = { "Clubs": 1, "Diamonds": 2, "Hearts": 3, "Spades": 4 }
 
 
 func _ready():

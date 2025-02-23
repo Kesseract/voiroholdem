@@ -43,7 +43,7 @@ func get_eligible_players() -> Array[String]:
         Array: 資格があるプレイヤーのリスト
     """
     # 獲得資格があるプレイヤーのリスト
-    var eligible_players = []
+    var eligible_players: Array[String] = []
 
     # 獲得資格があるプレイヤーを追加する
     for player in contributions.keys():

@@ -37,7 +37,6 @@ var game_process
 var time_manager
 
 
-# 初期化
 func _init(_name: String, _chips: int, _game_process, _is_cpu: bool = false):
     """初期化関数
     Args:
@@ -66,36 +65,8 @@ func _ready() -> void:
         void
     """
     # 時間管理クラスをノードに追加する
+    time_manager.name = "TimeManager"
     add_child(time_manager)
-
-
-func to_str() -> String:
-    """属性表示用関数
-    Args:
-    Returns:
-        result String: インスタンスの現在の属性をまとめた文字列
-    """
-    var result = "=== PlayerBackend 状態 ===\n"
-    result += "プレイヤー名: " + str(player_name) + "\n"
-    result += "チップ: " + str(chips) + "\n"
-    # hand の情報を文字列として取得
-    if hand.size() > 0:
-        var hand_strings = []
-        for card in hand:
-            hand_strings.append(card.to_str())
-        result += "ハンド: " + ", ".join(hand_strings) + "\n"
-    else:
-        result += "ハンド: なし\n"
-    result += "ディーラーボタン:" + str(is_dealer) + "\n"
-    result += "ベット額: " + str(current_bet) + "\n"
-    result += "最後のアクション: " + str(last_action) + "\n"
-    result += "アクションしたか: " + str(has_acted) + "\n"
-    result += "フォールド: " + str(is_folded) + "\n"
-    result += "オールイン: " + str(is_all_in) + "\n"
-    result += "手役: " + str(hand_category) + "\n"
-    result += "強さ: " + str(hand_rank) + "\n"
-    result += "=======================\n"
-    return result
 
 
 func bet(amount: int) -> int:
@@ -118,7 +89,6 @@ func bet(amount: int) -> int:
     return actual_bet
 
 
-# フォールドする
 func fold(seeing) -> void:
     """フォールド関数
     Args:
@@ -140,7 +110,6 @@ func fold(seeing) -> void:
     is_folded = true
 
 
-# 利用可能なアクションの中からアクションを選択する。
 func select_action(available_actions: Array[String]) -> String:
     """アクション選択関数
     Args:
@@ -206,7 +175,6 @@ func set_selected_action(action: String) -> void:
     print("Selected action updated to:", action)
 
 
-# ベット額をセットする
 func set_selected_bet_amount(amount: int) -> void:
     """ベット額設定関数
     Args:
@@ -218,7 +186,6 @@ func set_selected_bet_amount(amount: int) -> void:
     selected_bet_amount = amount
 
 
-# ベットまたはレイズの額を選択する。
 func select_bet_amount(min_amount: int, max_amount: int) -> int:
     """ベット額選択関数
     Args:
@@ -241,7 +208,7 @@ func select_bet_amount(min_amount: int, max_amount: int) -> int:
     # 選択されたベット額を返す
     return amount
 
-# CPUとしてベット額を選択
+
 func _cpu_select_bet_amount(min_amount: int, max_amount: int) -> int:
     """CPUベット額選択用関数
     Args:
@@ -253,7 +220,7 @@ func _cpu_select_bet_amount(min_amount: int, max_amount: int) -> int:
     # ランダムに選択されたベット額
     return randi() % (max_amount - min_amount + 1) + min_amount
 
-# プレイヤーとしてのベットまたはレイズの額を選択する
+
 func _player_select_bet_amount() -> int:
     """プレイヤーベット額選択用関数
     Args:
@@ -262,3 +229,32 @@ func _player_select_bet_amount() -> int:
     """
     # あらかじめ選択していたベット額を整数にして返す
     return int(selected_bet_amount)
+
+
+func to_str() -> String:
+    """属性表示用関数
+    Args:
+    Returns:
+        result String: インスタンスの現在の属性をまとめた文字列
+    """
+    var result = "=== PlayerBackend 状態 ===\n"
+    result += "プレイヤー名: " + str(player_name) + "\n"
+    result += "チップ: " + str(chips) + "\n"
+    # hand の情報を文字列として取得
+    if hand.size() > 0:
+        var hand_strings = []
+        for card in hand:
+            hand_strings.append(card.to_str())
+        result += "ハンド: " + ", ".join(hand_strings) + "\n"
+    else:
+        result += "ハンド: なし\n"
+    result += "ディーラーボタン:" + str(is_dealer) + "\n"
+    result += "ベット額: " + str(current_bet) + "\n"
+    result += "最後のアクション: " + str(last_action) + "\n"
+    result += "アクションしたか: " + str(has_acted) + "\n"
+    result += "フォールド: " + str(is_folded) + "\n"
+    result += "オールイン: " + str(is_all_in) + "\n"
+    result += "手役: " + str(hand_category) + "\n"
+    result += "強さ: " + str(hand_rank) + "\n"
+    result += "=======================\n"
+    return result

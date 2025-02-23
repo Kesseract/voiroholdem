@@ -45,6 +45,7 @@ func _ready() -> void:
         void
     """
     # 時間管理クラスをノードに追加する
+    time_manager.name = "TimeManager"
     add_child(time_manager)
 
 
@@ -90,7 +91,7 @@ func set_backend(_backend: CardBackend) -> void:
 
     # バックエンドの値と同期させる
     set_rank(backend.rank)
-    set_suit(backend.suit)
+    set_suit(backend.suit_to_symbol(backend.suit))
 
 
 func set_visible_node(flg: bool) -> void:

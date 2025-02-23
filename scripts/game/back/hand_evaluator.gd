@@ -169,10 +169,23 @@ func is_four_of_a_kind(cards: Array) -> Dictionary:
     # ランクの数を数える
     var rank_counts = get_rank_counts(cards)
 
+    # 結果用変数
+    var four_of_a_kind_rank = null
+    var kicker = null
+
     # ランクの数が4つのものが存在する場合、フォーオブアカインドとして判定する
     for rank in rank_counts.keys():
         if rank_counts[rank] == 4:
-            return {"category": HandCategory.FOUR_OF_A_KIND, "rank": [rank]}
+            four_of_a_kind_rank = RANKS[rank]
+
+    if four_of_a_kind_rank != null:
+        # キッカーを特定（フォーオブアカインドに含まれない1枚）
+        for card in cards:
+            if RANKS[card.rank] != four_of_a_kind_rank:
+                kicker = RANKS[card.rank]  # 文字列から数値に変換
+                break  # キッカーは1枚だけなのでループ終了
+
+        return {"category": HandCategory.FOUR_OF_A_KIND, "rank": [four_of_a_kind_rank, kicker]}
 
     # そうでない場合はnullを返す
     return {"category": null, "rank": null}
@@ -196,9 +209,9 @@ func is_full_house(cards: Array) -> Dictionary:
     # 同じランクのカードが3枚、または2枚存在する場合、そのランクを変数に入れる
     for rank in rank_counts.keys():
         if rank_counts[rank] == 3:
-            three = rank
+            three = RANKS[rank]
         elif rank_counts[rank] == 2:
-            pair = rank
+            pair = RANKS[rank]
 
     # 3枚セット、2枚セットが両方とも存在する場合、フルハウスとして判定する
     if three and pair:
@@ -453,17 +466,17 @@ func get_rank_counts(cards: Array) -> Dictionary:
     # 結果を返す
     return counts
 
-# カードのランクをソートするヘルパーメソッド
+
 func sorted_ranks(cards: Array) -> Array[int]:
     """カードのランクをソートする関数
     カードのランクをRANKSに基づいて数値に変換し、降順でソート
     Args:
         cards Array[CardBackend]: 5枚のカードの配列
     Returns:
-        ranks Array[int]: 数値返還され、降順に並びなおされたカード
+        ranks Array[int]: 数値変換され、降順に並びなおされたカード
     """
     # 結果用配列
-    var ranks = []
+    var ranks: Array[int] = []
 
     # 数値変換
     for card in cards:
