@@ -295,25 +295,30 @@ func test_set_action_list():
 
     # **状況別にテストを実行**
     var test_cases = [
-        # 1. 初手のプレイヤー → チェックとベットが可能
+        # 1. 初手のプレイヤー → コールとレイズが可能
         {
-            "bet_record": [1, 2], "current_max_bet": 0, "current_bet": 0, "chips": 1000,
+            "bet_record": [1, 2], "current_max_bet": 2, "current_bet": 0, "chips": 1000,
             "expected": ["fold", "call", "raise"]
         },
-        # 2. 誰かがベット済みで、プレイヤーがまだコールしていない → フォールドとコールが可能
+        # 2. 誰かがベット済みで、プレイヤーがまだコールしていない → フォールドとコール、レイズが可能
         {
             "bet_record": [50], "current_max_bet": 50, "current_bet": 0, "chips": 1000,
             "expected": ["fold", "call", "raise"]
         },
-        # 3. 誰かがベット済みで、プレイヤーがすでにコール済み → チェックとレイズが可能
+        # 3. 誰もベットしていない状況 → チェックとベットが可能
         {
-            "bet_record": [50], "current_max_bet": 50, "current_bet": 50, "chips": 1000,
+            "bet_record": [], "current_max_bet": 0, "current_bet": 0, "chips": 1000,
             "expected": ["check", "bet"]
         },
         # 4. 所持チップが足りないが、コールできる → オールインのみ可能
         {
             "bet_record": [100, 1000], "current_max_bet": 1000, "current_bet": 0, "chips": 500,
             "expected": ["fold", "all-in"]
+        },
+        # 5. 誰かがベット済みで、プレイヤーがすでにコール済み → チェックとベットが可能
+        {
+            "bet_record": [50], "current_max_bet": 50, "current_bet": 50, "chips": 1000,
+            "expected": ["check", "bet"]
         },
     ]
 

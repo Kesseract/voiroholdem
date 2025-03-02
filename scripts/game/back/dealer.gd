@@ -89,7 +89,7 @@ func burn_card(place: String) -> void:
         card.front.show_back()
         card.front.set_position(table_place["Deck"].get_position() - table_place["Burn"]["Instance"].get_position())
         table_place["Burn"][place].add_child(card.front)
-        card.front.time_manager.move_to(card.front, table_place["Burn"][place].get_position(), 0.5, Callable(game_process, "_on_moving_finished"))
+        card.front.time_manager.move_to(card.front, table_place["Burn"][place].get_position(), 1.0, Callable(game_process, "_on_moving_finished"))
     else:
         # 待機処理を行う
         card.time_manager.wait_to(1.0, Callable(game_process, "_on_moving_finished"))
@@ -147,7 +147,7 @@ func deal_card(start_position: int = 0) -> void:
             # Dealer Seatの位置から、current_seat Seat + current_seat Hand1した位置を引いて、全体にHandのスケールの逆数をかける
             card.front.set_position((table_place["Deck"].get_position() - (animation_place[current_seat]["Seat"].get_position() + animation_place[current_seat]["Hand1"].get_position())) * (1 / 0.6))
             animation_place[current_seat]["Hand1"].add_child(card.front)
-            card.front.time_manager.wait_move_to(wait, card.front, Vector2(0, 0), 0.5, Callable(game_process, "_on_moving_finished"))
+            card.front.time_manager.wait_move_to(wait, card.front, Vector2(0, 0), 1.0, Callable(game_process, "_on_moving_finished"))
         else:
             # 待機処理を行う
             card.time_manager.wait_wait_to(wait, 1.0, Callable(game_process, "_on_moving_finished"))
@@ -156,7 +156,7 @@ func deal_card(start_position: int = 0) -> void:
         n_moving_plus.emit()
 
         # 少しずつずらす分の値
-        wait += 0.3
+        wait += 0.5
 
 
 func get_card_param(player: ParticipantBackend) -> Dictionary:
@@ -219,7 +219,7 @@ func set_initial_button() -> ParticipantBackend:
         # ディーラーの位置から、ディーラーボタン所持プレイヤーの位置にディーラーボタンを動かす
         dealer_button.front.set_position(animation_place["Dealer"]["Seat"].get_position() + animation_place["Dealer"]["DealerButton"].get_position())
         table_place["DealerButton"].add_child(dealer_button.front)
-        dealer_button.front.time_manager.move_to(dealer_button.front, animation_place[dealer_seat]["Seat"].get_position() + animation_place[dealer_seat]["DealerButton"].get_position(), 0.5, Callable(game_process, "_on_moving_finished"))
+        dealer_button.front.time_manager.move_to(dealer_button.front, animation_place[dealer_seat]["Seat"].get_position() + animation_place[dealer_seat]["DealerButton"].get_position(), 1.0, Callable(game_process, "_on_moving_finished"))
     else:
         # 待機処理を行う
         dealer_button.time_manager.wait_to(1.0, Callable(game_process, "_on_moving_finished"))
@@ -370,10 +370,7 @@ func distribute_single_card(
             # 見た目処理
             if seeing:
                 card.front.set_backend(card)
-                # TODO playerだけshow_front(もしくはcard_open？)
-                # TODO それ以外はshow_backにする必要あり
-                # TODO 今はテストのためにshow_front()
-                card.front.show_front()
+                card.front.show_back()
                 # デッキの位置から、current_seat Seat + current_seat Hand1|2した位置を引いて、全体にHandのスケールの逆数をかける
                 card.front.set_position((table_place["Deck"].get_position() - (animation_place[seats[current_position]]["Seat"].get_position() + animation_place[seats[current_position]][hand].get_position())) * (1 / 0.6))
                 animation_place[seats[current_position]][hand].add_child(card.front)
@@ -400,56 +397,31 @@ func set_action_list(player: ParticipantBackend, current_max_bet: int) -> Packed
     Returns:
         action_list PackedStringArray: アクションリスト
     """
-    # アクションリストを保持する配列
     var action_list: PackedStringArray = []
+    var player_bet = player.player_script.current_bet
+    var player_chips = player.player_script.chips
 
-    # チップを出さなければならない場合
-    if bet_record[-1] > player.player_script.current_bet:
-        # フォールドのアクションが許可される
+    # フォールドするかどうか
+    # 現在の最大掛け金に比べ、自分の掛け金が少ない場合
+    if current_max_bet > player_bet:
         action_list.append("fold")
 
-    # 誰かが賭けているなら
-    if bet_record.size() >= 1:
-        # 最大掛け金 - すでに自分が賭けている金額が自分の所持チップより少ない場合
-        if player.player_script.chips <= current_max_bet - player.player_script.current_bet:
-            # オールインが許可される
-            action_list.append("all-in")
-        else:
-            # チップを出さなければならない場合
-            if bet_record[-1] > player.player_script.current_bet:
-                # コールが許可される
-                action_list.append("call")
-            else:
-                # チップを出さなくてよい場合
-                # チェック処理が許可される
-                action_list.append("check")
+        if player_chips > current_max_bet:
+            # コールできるかどうか
+            action_list.append("call")
 
-        # 最大掛け金より、自分が賭け、所持しているチップが多い場合
-        if current_max_bet < player.player_script.current_bet + player.player_script.chips:
-            # 自分より前にチップを出した人がいる場合
-            if bet_record[-1] > player.player_script.current_bet:
-                # レイズ処理が許可される
-                action_list.append("raise")
-            else:
-                # そうでない場合
-                # ベット処理が許可される
-                action_list.append("bet")
+            # レイズできるかどうか
+            action_list.append("raise")
+        else:
+            # オール・インの追加
+            action_list.append("all-in")
     else:
-        # まだ誰もかけていない場合
-        # まずチェック処理が許可される
+        # チェックできるかどうか
         action_list.append("check")
 
-        # 再度アクティブなプレイヤーを更新
-        # フォールドもオールインもしていないプレイヤーを集計
-        var active_players = get_active_players(true, true)
+        # ベットできるかどうか
+        action_list.append("bet")
 
-        # アクティブなプレイヤーが一人でもいて、自分が賭け、所持しているチップが多い場合
-        if active_players.size() > 1:
-            if current_max_bet < player.player_script.current_bet + player.player_script.chips:
-                # ベット処理が許可される
-                action_list.append("bet")
-
-    # アクションリストを返す
     return action_list
 
 
@@ -472,6 +444,7 @@ func selected_action(action: String, player: ParticipantBackend, current_max_bet
 
         # 見た目がある場合、カード破棄アニメーションに対応した信号を送る
         if seeing:
+            player.front.fold()
             n_moving_plus.emit()
 
         # アクション履歴にフォールドを追加
@@ -508,8 +481,11 @@ func selected_action(action: String, player: ParticipantBackend, current_max_bet
             # そうでない場合、プレイヤーに掛け金を選択させる
             bet_amount = player.player_script.select_bet_amount(min_bet, max_bet)
 
+        # チップ支払処理を行う
+        set_bet(bet_amount, player, current_seat)
+
         # オールイン処理の場合
-        if bet_amount == player.player_script.chips:
+        if player.player_script.chips == 0:
             # オールインフラグをtrueにする
             player.player_script.is_all_in = true
 
@@ -518,9 +494,6 @@ func selected_action(action: String, player: ParticipantBackend, current_max_bet
         else:
             # そうでない場合、アクション履歴にベットを追加
             player.player_script.last_action.append("Bet")
-
-        # チップ支払処理を行う
-        set_bet(bet_amount, player, current_seat)
 
         # 現在の最大掛け金を更新する
         current_max_bet = bet_amount
@@ -545,8 +518,11 @@ func selected_action(action: String, player: ParticipantBackend, current_max_bet
             # そうでない場合、プレイヤーに掛け金を選択させる
             raise_amount = player.player_script.select_bet_amount(min_raise, max_raise)
 
+        # チップ支払処理を行う
+        set_bet(raise_amount, player, current_seat)
+
         # オールイン処理の場合
-        if raise_amount == player.player_script.chips:
+        if player.player_script.chips == 0:
             # オールインフラグをtrueにする
             player.player_script.is_all_in = true
 
@@ -555,9 +531,6 @@ func selected_action(action: String, player: ParticipantBackend, current_max_bet
         else:
             # そうでない場合、アクション履歴にレイズを追加
             player.player_script.last_action.append("Raise")
-
-        # チップ支払処理を行う
-        set_bet(raise_amount, player, current_seat)
 
         # 現在の最大掛け金を更新する
         current_max_bet = raise_amount
@@ -585,6 +558,10 @@ func selected_action(action: String, player: ParticipantBackend, current_max_bet
 
         # ベット履歴に賭けた金額を追加
         bet_record.append(player.player_script.current_bet)
+
+    # プレイヤーのfrontにアクションを渡す
+    if seeing:
+        player.front.set_name_action(Global.ACTION_LIST[action])
 
 
 func set_bet(amount, player, current_seat) -> void:
@@ -868,6 +845,26 @@ func reveal_community_cards(num_cards: Array) -> Array[CardBackend]:
     return community_cards
 
 
+func hand_open(active_players: Array[ParticipantBackend]) -> void:
+    """アクティブなプレイヤー（CPU）のカードを開く関数
+    Args:
+        active_players Array[ParticipantBackend]: アクティブなプレイヤー
+    Return:
+        void
+    """
+    # 見た目処理
+    if seeing:
+        # アクティブなプレイヤーが持っているカードをめくる
+        for player in active_players:
+            for card in player.player_script.hand:
+                card.front.do_open(Callable(game_process, "_on_moving_finished"))
+                n_moving_plus.emit()
+    else:
+        # 待機処理
+        time_manager.wait_to(1.0, Callable(game_process, "_on_moving_finished"))
+        n_moving_plus.emit()
+
+
 func compare_players(a: ParticipantBackend, b: ParticipantBackend) -> bool:
     """手の強さを比較する関数
     Args:
@@ -952,7 +949,7 @@ func distribute_pots(active_players: Array) -> void:
                             table_place["Pot"].get_child(0).set_bet_value(-1 * refund_amount)
                             pot_front.time_manager.move_to(pot_front, (animation_place[seat]["Seat"].get_position() + animation_place[seat]["Bet"].get_position()) - table_place["Pot"].get_position(), 0.5, Callable(game_process, "_on_moving_finished_queue_free").bind(pot_front))
 
-                            # # 動作、待機の分だけ信号を送る
+                            # 動作、待機の分だけ信号を送る
                             n_moving_plus.emit()
             continue
 
@@ -960,9 +957,6 @@ func distribute_pots(active_players: Array) -> void:
         var strongest_hand_category = eligible_players[0].player_script.hand_category
         var strongest_hand_rank = eligible_players[0].player_script.hand_rank
         var winners = eligible_players.filter(func(player): return player.player_script.hand_category == strongest_hand_category and player.player_script.hand_rank == strongest_hand_rank)
-
-        print(eligible_players)
-        print(winners)
 
         # ポットを勝者に分配
         var chips_per_winner = pot.total / winners.size()
@@ -985,8 +979,6 @@ func distribute_pots(active_players: Array) -> void:
 
                 # チップが分割されるかどうか
                 var pot_front = null
-                print(j)
-                print(winners.size())
                 if j == winners.size():
                     if i == pots.size():
                         # 最後に残ったポットを移動する
@@ -1074,6 +1066,11 @@ func reset_round(buy_in: int) -> void:
                 player.player_script.chips = buy_in
                 if seeing:
                     player.front.set_chips(buy_in)
+
+            # b. フォールド用の被せているやつをとる
+            if seeing:
+                player.front.gray.visible = false
+
 
     # 2. コミュニティカード、バーンカードのリセット
     if seeing:

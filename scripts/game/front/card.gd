@@ -12,6 +12,8 @@ var backend: CardBackend
 var time_manager: TimeManager
 
 # state
+var waiting_time = 0.0
+var state = 0
 enum {
     STATE_NONE = 0,
     OPENING_FH,            # オープン中 前半
@@ -21,11 +23,11 @@ enum {
 }
 
 # 回転スケール
+var theta = 0.0
 const TH_SCALE = 1.5
 
-# 信号
-# signal opening_finished
-# signal closing_finished
+
+var callback: Callable = Callable()
 
 
 func _init() -> void:
@@ -136,61 +138,61 @@ func show_back() -> void:
     # 表面表示に切り替える
     set_visible_node(false)
 
-# カードを回転させる必要があったらこれを使う
-# func do_open():
-#     state = OPENING_FH
-#     theta = 0.0
-#     $Front.hide()
-#     $Back.show()
-#     $Back.set_scale(Vector2(1.0, 1.0))
-# func do_wait_close(wait : float):
-#     waiting_time = wait
-#     do_close()
-# func do_close():
-#     state = CLOSING_FH
-#     theta = 0.0
-#     $Back.hide()
-#     $Front.show()
-#     $Front.set_scale(Vector2(1.0, 1.0))
 
-    #if state != STATE_NONE:
-    #    print("state = ", state)
-    # if state == OPENING_FH:
-    #     theta += delta * TH_SCALE
-    #     if theta < PI/2:
-    #         $Back.set_scale(Vector2(cos(theta), 1.0))
-    #     else:
-    #         state = OPENING_SH
-    #         $Front.show()
-    #         $Back.hide()
-    #         theta -= PI
-    #         $Front.set_scale(Vector2(cos(theta), 1.0))
-    # elif state == OPENING_SH:
-    #     theta += delta * TH_SCALE
-    #     theta = min(theta, 0)
-    #     if theta < 0:
-    #         $Front.set_scale(Vector2(cos(theta), 1.0))
-    #     else:
-    #         state = STATE_NONE
-    #         $Front.set_scale(Vector2(1.0, 1.0))
-    #         opening_finished.emit()
-    # elif state == CLOSING_FH:
-    #     theta += delta * TH_SCALE * 1.5
-    #     if theta < PI/2:
-    #         $Front.set_scale(Vector2(cos(theta), 1.0))
-    #     else:
-    #         state = CLOSING_SH
-    #         $Back.show()
-    #         $Front.hide()
-    #         theta -= PI
-    #         $Back.set_scale(Vector2(cos(theta), 1.0))
-    # elif state == CLOSING_SH:
-    #     theta += delta * TH_SCALE * 1.5
-    #     theta = min(theta, 0)
-    #     if theta < 0:
-    #         $Back.set_scale(Vector2(cos(theta), 1.0))
-    #     else:
-    #         state = STATE_NONE
-    #         $Back.set_scale(Vector2(1.0, 1.0))
-    #         closing_finished.emit()
-    # pass
+func do_open(cb: Callable):
+    callback = cb
+    state = OPENING_FH
+    theta = 0.0
+    set_visible_node(false)
+    var back_node = get_node("Back")
+    back_node.set_scale(Vector2(1.0, 1.0))
+
+
+func do_wait_close(wait : float):
+    waiting_time = wait
+    do_close()
+
+
+func do_close():
+    state = CLOSING_FH
+    theta = 0.0
+    set_visible_node(true)
+    var front_node = get_node("Front")
+    front_node.set_scale(Vector2(1.0, 1.0))
+
+
+func _process(delta):
+    if state == OPENING_FH:
+        # カードオープン前半なら
+        # 角度を増やす
+        theta += delta * TH_SCALE
+        # 角度が90度かどうか
+        if theta < PI/2:
+            # 鋭角なら、裏側を削っていく
+            var back = get_node("Back")
+            back.set_scale(Vector2(cos(theta), 1.0))
+        else:
+            # 90度なら、表側を出す
+            state = OPENING_SH
+            set_visible_node(true)
+            # 角度を-90度にする
+            theta -= PI
+            var front = get_node("Front")
+            front.set_scale(Vector2(cos(theta), 1.0))
+    elif state == OPENING_SH:
+        # カードオープン後半なら
+        # 角度を増やす
+        theta += delta * TH_SCALE
+        theta = min(theta, 0)
+        var front = get_node("Front")
+        # 角度が0度以下かどうか
+        if theta < 0:
+            # 表側をどんどん出していく
+            front.set_scale(Vector2(cos(theta), 1.0))
+        else:
+            # 開き終わり
+            state = STATE_NONE
+            front.set_scale(Vector2(1.0, 1.0))
+            # コールバックが有効なら呼ぶ
+            if callback.is_valid():
+                callback.call()

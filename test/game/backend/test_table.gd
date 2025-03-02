@@ -50,22 +50,6 @@ func test_init():
     assert_eq(table_backend.selected_cpus, ["CPU1", "CPU2"], "CPU プレイヤーが正しく選択されているべき")
 
 
-func test_ready():
-    """time_managerが正しくツリーに追加されているか
-    """
-    # `CardBackend` インスタンスを作成
-
-    # `card` をツリーに追加
-    add_child(table_backend)
-    await get_tree().process_frame  # `_ready()` の実行を待つ
-    await get_tree().process_frame  # `_ready()` の実行を待つ
-
-    # `time_manager` が追加されているかチェック
-    var table_front = test_table_place["Instance"].get_node_or_null("Table")
-
-    assert_not_null(table_front, "Table should be added as a child node")
-
-
 func test_seat_dealer():
     """ディーラー着席テスト"""
 

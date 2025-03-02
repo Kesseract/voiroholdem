@@ -6,6 +6,9 @@ var sprite: Sprite2D
 var name_action: Label
 var chips: Label
 
+# フォールド用の被せるテクスチャ
+@onready var gray = $Gray
+
 # バックエンド
 var backend: ParticipantBackend
 
@@ -125,3 +128,7 @@ func set_parameter(_backend: ParticipantBackend, _seat: String) -> void:
     # 名前とチップ数を設定
     set_name_action(backend.participant_name)
     set_chips(backend.chips)
+
+
+func fold():
+    gray.visible = true

@@ -8,7 +8,9 @@ class_name GameProcessBackend
 enum State {
     INIT,
     SEATING_PLAYER,
+    SEATED_PLAYER,
     SEATING_DEALER,
+    SEATED_DEALER,
     SEATING_CPUS,
     SEATING_COMPLETED,
     SETTING_DEALER_BUTTON,
@@ -38,6 +40,7 @@ enum State {
 # サブステート
 enum SubState {
     READY,
+    WAIT,
     PLAYER_INPUT,
     PARTICIPANT_MOVING,
     CARD_MOVING,
@@ -52,6 +55,7 @@ enum SubState {
 var state: State = State.INIT
 var sub_state: SubState = SubState.READY
 var state_in_state: int = 0
+var waiting_time: float = 0.0
 var bet_size: Dictionary
 var bb: int
 var sb: int
@@ -81,7 +85,9 @@ var time_manager: TimeManager
 var state_function_map: Dictionary = {
     State.INIT: process_INIT,
     State.SEATING_PLAYER: process_SEATING_PLAYER,
+    State.SEATED_PLAYER: process_SEATED_PLAYER,
     State.SEATING_DEALER: process_SEATING_DEALER,
+    State.SEATED_DEALER: process_SEATED_DEALER,
     State.SEATING_CPUS: process_SEATING_CPUS,
     State.SEATING_COMPLETED: process_SEATING_COMPLETED,
     State.SETTING_DEALER_BUTTON: process_SETTING_DEALER_BUTTON,
@@ -107,6 +113,10 @@ var state_function_map: Dictionary = {
     State.NEXT_DEALER_BUTTON: process_NEXT_DEALER_BUTTON,
     State.MOVED_DEALER_BUTTON: process_MOVED_DEALER_BUTTON
 }
+
+
+# TODO 手の強さを表示する処理
+    # TODO 対象の手を光らせる処理
 
 
 func _init(
@@ -195,74 +205,81 @@ func _on_moving_finished() -> void:
 
     # 動かすものがない場合
     if n_moving == 0:
-        # サブステートをREADYにする
-        sub_state = SubState.READY
+        # 一定時間待ってから次の処理へ
+        waiting_time = 0.5  # 0.5秒の待機
+        # サブステートをWAITにする
+        sub_state = SubState.WAIT
 
-        # 条件分岐
-        """
-            ・stateがSETTING_DEALER_BUTTONで、state_in_stateが3以外
-            ・stateがDEALING_CARDで、state_in_stateが2以外
-            ・stateがPRE_FLOP_ACTION_END、FLOP_ACTION_END、TURN_ACTION_END、RIVER_ACTION_ENDのどれかで、
-                state_in_stateが0か2の時
-            ・stateがSHOW_DOWNで、state_in_stateが0以外
-            →state_in_stateを1追加する
 
-            ・stateがPRE_FLOP_ACTION_END、FLOP_ACTION_END、TURN_ACTION_END、RIVER_ACTION_ENDのどれかで、
-                state_in_stateが1の時
-                ・アクションを行えるプレイヤーが1人の時
-                →state_in_stateを2に
-                ・そうでないとき
-                →state_in_stateを4に
+func _wait_to_next_state() -> void:
+    # サブステートをREADYにする
+    sub_state = SubState.READY
 
-            ・stateがPRE_FLOP_ACTION、FLOP_ACTION、TURN_ACTION、RIVER_ACTIONのどれか
-                ・アクションを行えるプレイヤーが0人の時
-                →次のステートへ
+    # 条件分岐
+    """
+        ・stateがSETTING_DEALER_BUTTONで、state_in_stateが3以外
+        ・stateがDEALING_CARDで、state_in_stateが2以外
+        ・stateがPRE_FLOP_ACTION_END、FLOP_ACTION_END、TURN_ACTION_END、RIVER_ACTION_ENDのどれかで、
+            state_in_stateが0か2の時
+        ・stateがSHOW_DOWNで、state_in_stateが0以外
+        →state_in_stateを1追加する
 
-            ・上記以外の場合
-                →次のステートへ
-        """
-        if ((
-                state == State.SETTING_DEALER_BUTTON and state_in_state != 3
-            ) or
+        ・stateがPRE_FLOP_ACTION_END、FLOP_ACTION_END、TURN_ACTION_END、RIVER_ACTION_ENDのどれかで、
+            state_in_stateが1の時
+            ・アクションを行えるプレイヤーが1人の時
+            →state_in_stateを2に
+            ・そうでないとき
+            →state_in_stateを4に
+
+        ・stateがPRE_FLOP_ACTION、FLOP_ACTION、TURN_ACTION、RIVER_ACTIONのどれか
+            ・アクションを行えるプレイヤーが0人の時
+            →次のステートへ
+
+        ・上記以外の場合
+            →次のステートへ
+    """
+    if ((
+            state == State.SETTING_DEALER_BUTTON and state_in_state != 3
+        ) or
+        (
+            state == State.DEALING_CARD and state_in_state != 2
+        ) or
+        (
             (
-                state == State.DEALING_CARD and state_in_state != 2
-            ) or
-            (
-                (
-                    state == State.PRE_FLOP_ACTION_END or
-                    state == State.FLOP_ACTION_END or
-                    state == State.TURN_ACTION_END or
-                    state == State.RIVER_ACTION_END
-                ) and
-                (state_in_state == 0 or
-                state_in_state == 2)
-            ) or
-            (
-                state == State.SHOW_DOWN and
-                state_in_state == 0
-            )):
-            state_in_state += 1
-        elif (
-            state == State.PRE_FLOP_ACTION_END or
-            state == State.FLOP_ACTION_END or
-            state == State.TURN_ACTION_END or
-            state == State.RIVER_ACTION_END
-            ) and state_in_state == 1:
-            if active_players.size() > 1:
-                state_in_state = 2
-            else:
-                state_in_state = 4
-        elif (
-            state == State.PRE_FLOP_ACTION or
-            state == State.FLOP_ACTION or
-            state == State.TURN_ACTION or
-            state == State.RIVER_ACTION
-            ):
-            if n_active_players == 0:
-                next_state()
+                state == State.PRE_FLOP_ACTION_END or
+                state == State.FLOP_ACTION_END or
+                state == State.TURN_ACTION_END or
+                state == State.RIVER_ACTION_END
+            ) and
+            (state_in_state == 0 or
+            state_in_state == 2)
+        ) or
+        (
+            state == State.SHOW_DOWN and
+            state_in_state == 0
+        )):
+        state_in_state += 1
+    elif (
+        state == State.PRE_FLOP_ACTION_END or
+        state == State.FLOP_ACTION_END or
+        state == State.TURN_ACTION_END or
+        state == State.RIVER_ACTION_END
+        ) and state_in_state == 1:
+        if active_players.size() > 1:
+            state_in_state = 2
         else:
-            state_in_state = 0
+            state_in_state = 4
+    elif (
+        state == State.PRE_FLOP_ACTION or
+        state == State.FLOP_ACTION or
+        state == State.TURN_ACTION or
+        state == State.RIVER_ACTION
+        ):
+        if n_active_players == 0:
             next_state()
+    else:
+        state_in_state = 0
+        next_state()
 
 
 func _on_moving_finished_queue_free(node: Node) -> void:
@@ -373,6 +390,18 @@ func bet_state() -> void:
         next_state()
         return
 
+    # アクティブなプレイヤーを計算
+    active_players.clear()
+    active_players = dealer.get_active_players(true, false)
+
+    # 1人を除いて全員がフォールドをしている場合
+    if active_players.size() == 1:
+        # sub_stateをREADYにして、次のステートに移す
+        sub_state = SubState.READY
+        next_state()
+        return
+
+
     # アクションを行う関数を実行
     var action = dealer.bet_round(start_index, bb, current_action)
 
@@ -475,7 +504,9 @@ func process_INIT() -> void:
     add_child(table_backend)
 
     # 次のステートへ
-    next_state()
+    sub_state = SubState.WAIT
+    time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
+    _on_n_moving_plus()
 
 
 func process_SEATING_PLAYER() -> void:
@@ -494,6 +525,21 @@ func process_SEATING_PLAYER() -> void:
     table_backend.seat_player()
 
 
+func process_SEATED_PLAYER() -> void:
+    """ステートSEATED_PLAYERに実行する関数
+    Args:
+    Returns:
+        void
+    """
+    # ステートのprint
+    print("State.SEATED_PLAYER")
+
+    # 次のステートへ
+    sub_state = SubState.WAIT
+    time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
+    _on_n_moving_plus()
+
+
 func process_SEATING_DEALER() -> void:
     """ステートSEATING_DEALERに実行する関数
     Args:
@@ -508,6 +554,21 @@ func process_SEATING_DEALER() -> void:
 
     # ディーラーを席に着かせる関数実行
     table_backend.seat_dealer()
+
+
+func process_SEATED_DEALER() -> void:
+    """ステートSEATED_DEALERに実行する関数
+    Args:
+    Returns:
+        void
+    """
+    # ステートのprint
+    print("State.SEATED_DEALER")
+
+    # 次のステートへ
+    sub_state = SubState.WAIT
+    time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
+    _on_n_moving_plus()
 
 
 func process_SEATING_CPUS() -> void:
@@ -536,7 +597,9 @@ func process_SEATING_COMPLETED() -> void:
     print("State.SEATING_COMPLETED")
 
     # 次のステートへ
-    next_state()
+    sub_state = SubState.WAIT
+    time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
+    _on_n_moving_plus()
 
 
 func process_SETTING_DEALER_BUTTON() -> void:
@@ -623,7 +686,9 @@ func process_DEALER_SET() -> void:
     dealer.add_child(dealer.time_manager)
 
     # 次のステートへ
-    next_state()
+    sub_state = SubState.WAIT
+    time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
+    _on_n_moving_plus()
 
 
 func process_PAYING_SB_BB() -> void:
@@ -705,7 +770,9 @@ func process_SB_BB_PAID() -> void:
     print("State.SB_BB_PAID")
 
     # 次のステートへ
-    next_state()
+    sub_state = SubState.WAIT
+    time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
+    _on_n_moving_plus()
 
 
 func process_DEALING_CARD() -> void:
@@ -771,7 +838,9 @@ func process_DEALED_CARD() -> void:
             player.player_script.has_acted = false
 
     # 次のステートへ
-    next_state()
+    sub_state = SubState.WAIT
+    time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
+    _on_n_moving_plus()
 
 
 func process_ACTION() -> void:
@@ -830,6 +899,13 @@ func process_ACTION_END() -> void:
             # sub_stateをREADYにし、つぎのstate_in_stateへ
             sub_state = SubState.READY
             state_in_state = 1
+
+        # プレイヤーの名前をもとに戻す
+        if seeing:
+            var all_player = dealer.get_active_players(false, false)
+            for player in all_player:
+                player.front.set_name_action(player.participant_name)
+
     elif state_in_state == 1:
         # アクティブなプレイヤーの数を数える
         # state_in_stateのprint
@@ -936,11 +1012,16 @@ func process_SHOW_DOWN() -> void:
         # sub_stateをCARD_OPENINGに
         sub_state = SubState.CARD_OPENING
 
-        # カードオープン（未実装）
-        time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
+        # カードを開くプレイヤーを特定
+        active_players = dealer.get_active_players(true, false)
 
-        # 動作の数を加算
-        _on_n_moving_plus()
+        var hand_open_player = []
+        for player in active_players:
+            if player.is_cpu:
+                hand_open_player.append(player)
+
+        # カードオープン
+        dealer.hand_open(hand_open_player)
     elif state_in_state == 1:
         # 手の強さを判定
         # state_in_stateのprint
@@ -969,7 +1050,9 @@ func process_SHOW_DOWN_END() -> void:
     print("State.SHOW_DOWN_END")
 
     # 次のステートへ
-    next_state()
+    sub_state = SubState.WAIT
+    time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
+    _on_n_moving_plus()
 
 
 func process_DISTRIBUTIONING_POTS() -> void:
@@ -998,7 +1081,9 @@ func process_DISTRIBUTIONED_POTS() -> void:
     print("State.DISTRIBUTIONED_POTS")
 
     # 次のステートへ
-    next_state()
+    sub_state = SubState.WAIT
+    time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
+    _on_n_moving_plus()
 
 
 func process_ROUND_RESETTING() -> void:
@@ -1027,7 +1112,9 @@ func process_ROUND_RESETED() -> void:
     print("State.ROUND_RESETED")
 
     # 次のステートへ
-    next_state()
+    sub_state = SubState.WAIT
+    time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
+    _on_n_moving_plus()
 
 
 func process_NEXT_DEALER_BUTTON() -> void:
@@ -1056,18 +1143,30 @@ func process_MOVED_DEALER_BUTTON() -> void:
     print("State.MOVED_DEALER_BUTTON")
 
     # 次のステートへ
-    next_state()
+    sub_state = SubState.WAIT
+    time_manager.wait_to(1.0, Callable(self, "_on_moving_finished"))
+    _on_n_moving_plus()
 
 
 func _process(_delta) -> void:
-    """枚フレーム実行される関数
+    """毎フレーム実行される関数
     Args:
         _delta float: 関数実行から何フレーム経ったか
     Returns:
         void
     """
-    # サブステートがREADYじゃない場合、すぐにリターンして次のフレームへ
-    if sub_state != SubState.READY:
+    # サブステートがWAITの場合、一定時間待機
+    if sub_state == SubState.WAIT:
+        if waiting_time > 0.0:
+            waiting_time -= _delta
+            return
+        # 待機終了
+        waiting_time = 0.0
+        sub_state = SubState.READY
+        _wait_to_next_state()
+
+    # サブステートがREADYじゃないし、WAITでもない場合、すぐにリターンして次のフレームへ
+    if sub_state != SubState.READY and sub_state != SubState.WAIT:
         # print(n_moving)
         # print("SubState:" + str(sub_state))
         return

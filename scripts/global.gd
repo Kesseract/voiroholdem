@@ -214,6 +214,17 @@ const WINDOW_SIZES = [
 ]
 
 
+# アクション定義
+const ACTION_LIST = {
+    "fold": "フォールド",
+    "check": "チェック",
+    "call": "コール",
+    "bet": "ベット",
+    "raise": "レイズ",
+    "all-in": "オールイン",
+}
+
+
 # 役定義
 const HandCategory = {
     HIGH_CARD = ["ハイカード", 1],

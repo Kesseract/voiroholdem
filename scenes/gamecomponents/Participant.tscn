@@ -1,9 +1,10 @@
-[gd_scene load_steps=7 format=3 uid="uid://b8v3ccjbk86km"]
+[gd_scene load_steps=8 format=3 uid="uid://b8v3ccjbk86km"]
 
 [ext_resource type="Script" path="res://scripts/game/front/paticipant.gd" id="1_3gjhw"]
 [ext_resource type="Texture2D" uid="uid://cbmwwuyac5gik" path="res://assets/textures/Characters/frame/playerframe_normal.png" id="3_pd0oh"]
 [ext_resource type="Texture2D" uid="uid://d0k5fghw7m28s" path="res://assets/textures/Characters/frame/playerframe_pressed.png" id="4_dfwb4"]
 [ext_resource type="Texture2D" uid="uid://ovjoijkq04ul" path="res://assets/textures/Characters/frame/playerframe_hover.png" id="5_0x38l"]
+[ext_resource type="Texture2D" uid="uid://ck6nqcq2dxejf" path="res://assets/textures/Game/gray.png" id="5_3kvmv"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mg8qn"]
 bg_color = Color(1, 1, 1, 1)
@@ -174,3 +175,19 @@ theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_styles/normal = SubResource("StyleBoxFlat_s6ydh")
 text = "0"
 horizontal_alignment = 1
+
+[node name="Gray" type="TextureRect" parent="."]
+visible = false
+modulate = Color(0, 0, 0, 0.47451)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -50.0
+offset_top = -77.0
+offset_right = 50.0
+offset_bottom = 77.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("5_3kvmv")
